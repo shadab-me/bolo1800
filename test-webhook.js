@@ -306,7 +306,7 @@ async function main() {
     assert.ok(data.destination);
     assert.ok(Array.isArray(data.destination.numbers));
     assert.deepEqual(data.destination.numbers, ['+919876543210', '+919811223344']);
-    assert.equal(data.record, false);
+    assert.equal(data.record, true, 'recording follows the number setting');
     assert.equal(data.max_conversation_duration, 60);
 
     // Also support format=text
@@ -331,6 +331,15 @@ async function main() {
     const failed = await fetch(`${base}/api/webhook/call-complete?token=test-webhook-token&CallSid=exo_fail&DialCallDuration=0&DialCallStatus=failed`);
     assert.equal(failed.status, 200);
     assert.equal(await failed.text(), 'OK');
+  });
+
+  await step('exotel: recording link arriving after billing is still saved', async () => {
+    const late = await fetch(`${base}/api/webhook/call-complete?token=test-webhook-token&CallSid=exo_123&DialCallDuration=45&DialCallStatus=completed&RecordingUrl=${encodeURIComponent('https://recordings.exotel.com/exo_123.mp3')}`);
+    assert.equal(late.status, 200);
+    const calls = (await api('/api/client/cdr', { token: client })).data.logs;
+    const row = calls.find(c => c.call_sid === 'exo_123');
+    assert.equal(row.recording_file, 'https://recordings.exotel.com/exo_123.mp3');
+    assert.equal(row.duration_seconds, 45, 'billing is not repeated');
   });
 
   server.close();

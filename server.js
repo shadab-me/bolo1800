@@ -569,6 +569,10 @@ async function finishCall(callId, { seconds = 0, status, recording }) {
      WHERE call_sid = ? AND status = 'initiated'`,
     [seconds, minutes, status, recording || '', callId]
   );
+  // A recording link can arrive on a later callback after the call is already billed
+  if (!result.changes && recording) {
+    await run(`UPDATE call_logs SET recording_file = ? WHERE call_sid = ? AND COALESCE(recording_file, '') = ''`, [recording, callId]);
+  }
   if (result.changes > 0 && minutes > 0) {
     // Minutes past the bundle become overage owed at OVERAGE.rate (SET reads the pre-update row)
     await run(
@@ -576,6 +580,10 @@ async function finishCall(callId, { seconds = 0, status, recording }) {
                         minutes_balance = MAX(0, minutes_balance - ?) WHERE id = ?`,
       [minutes, minutes, log.user_id]
     );
+  }
+  // If call was already completed, but a recording arrived now (or in a separate callback)
+  if (recording) {
+    await run(`UPDATE call_logs SET recording_file = ? WHERE call_sid = ? AND (recording_file IS NULL OR recording_file = '')`, [recording, callId]);
   }
 }
 
@@ -635,14 +643,15 @@ app.all('/api/webhook/incoming', webhookAuth, h(async (req, res) => {
     }
     // Exotel Programmable Connect (Dynamic URL JSON mode):
     // https://support.exotel.com/support/solutions/articles/3000096873-programmable-connect-working-with-connect-applet-dynamic-url-
-    // Configured for Exotel test: record: false, max_conversation_duration: 60
+    // Recording follows the number's "Record calls" setting; EXOTEL_RECORD=false turns it off for every call
     const exotelDuration = parseInt(process.env.EXOTEL_MAX_DURATION || '60', 10);
-    const exotelRecord = process.env.EXOTEL_RECORD === 'true' ? true : false;
+    const exotelRecord = process.env.EXOTEL_RECORD === 'false' ? false : !!assignment.record_calls;
     return res.status(200).json({
       destination: {
         numbers: targetNumbers
       },
       record: exotelRecord,
+      recording_channels: 'dual',
       max_conversation_duration: exotelDuration
     });
   }
@@ -702,11 +711,11 @@ app.all('/api/webhook/call-complete', webhookAuth, h(async (req, res) => {
   sendXml(res, '  <Hangup/>');
 }));
 
-// Plivo Record callbackUrl: may arrive before or after billing, so it only fills the recording
+// Plivo Record callbackUrl (or an Exotel status callback): may arrive before or after billing, so it only fills the recording
 app.all('/api/webhook/recording', webhookAuth, h(async (req, res) => {
   const p = webhookParams(req);
-  const callId = p.CallUUID || p.DialALegUUID;
-  const url = safeUrl(p.RecordUrl);
+  const callId = p.CallUUID || p.DialALegUUID || p.CallSid;
+  const url = safeUrl(p.RecordUrl || p.RecordingUrl);
   if (callId && url) {
     await run(`UPDATE call_logs SET recording_file = ? WHERE call_sid = ? AND COALESCE(recording_file, '') = ''`, [url, callId]);
   }
