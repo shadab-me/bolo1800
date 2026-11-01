@@ -722,6 +722,12 @@ app.all('/api/webhook/recording', webhookAuth, h(async (req, res) => {
   res.send('OK');
 }));
 
+// Exotel Greeting Applet route (Text-to-Speech / Dynamic Greeting)
+app.all('/api/webhook/greeting', webhookAuth, h(async (req, res) => {
+  res.set('Content-Type', 'text/plain');
+  res.status(200).send('This call is really important for us. You can wait, we will connect with you in a moment.');
+}));
+
 // Plivo Application hangup_url: fires when the caller's leg ends. Safety net for a lost /dial-event —
 // wait for the Dial callbacks first, then bill from the A-leg only if the call is still unbilled.
 // The A-leg duration includes ring time, so it can overstate talk time by up to the ring timeout.
