@@ -123,16 +123,16 @@ async function main() {
     assert.match(r.text, /call-complete\?token=test-webhook-token/);
   });
 
-  await step('125 s call bills 3 minutes', async () => {
+  await step('125 s call bills 2 tokens with 5s grace window (61s bills 1 token)', async () => {
     await webhook('call-complete', { CallSid: 'CA_TEST_1', DialCallDuration: 125, DialCallStatus: 'completed', RecordingUrl: 'https://rec.example/1.mp3' });
     const d = await api('/api/client/details', { token: client });
-    assert.equal(d.data.user.minutes_balance, 997);
+    assert.equal(d.data.user.minutes_balance, 998);
   });
 
   await step('carrier retry of the same callback does not bill twice', async () => {
     await webhook('call-complete', { CallSid: 'CA_TEST_1', DialCallDuration: 125, DialCallStatus: 'completed' });
     const d = await api('/api/client/details', { token: client });
-    assert.equal(d.data.user.minutes_balance, 997);
+    assert.equal(d.data.user.minutes_balance, 998);
   });
 
   await step('call log records the recording and rejects javascript: URLs', async () => {
@@ -181,7 +181,7 @@ async function main() {
   await step('admin stats report revenue and a cost estimate', async () => {
     const { data } = await api('/api/admin/stats', { token: admin });
     assert.ok(data.revenue_all_time >= 5000);
-    assert.equal(data.minutes_month, 4);
+    assert.equal(data.minutes_month, 3);
     assert.ok(data.est_cost_month > 0);
   });
 
@@ -197,13 +197,13 @@ async function main() {
     assert.doesNotMatch(r.text, /record="/);
   });
 
-  await step('plivo: unanswered leg does not close the call; answered 61 s leg bills 2 minutes once', async () => {
+  await step('plivo: unanswered leg does not close the call; answered 61 s leg bills 1 token (under grace window)', async () => {
     const before = await balance();
     await webhook('dial-event', { DialAction: 'hangup', DialALegUUID: 'pl-1', DialBLegUUID: 'b1', DialBLegDuration: 0 });
     await webhook('dial-event', { DialAction: 'hangup', DialALegUUID: 'pl-1', DialBLegUUID: 'b2', DialBLegDuration: 61 });
     await webhook('dial-event', { DialAction: 'hangup', DialALegUUID: 'pl-1', DialBLegUUID: 'b2', DialBLegDuration: 61 });
     await webhook('call-complete', { CallUUID: 'pl-1', DialStatus: 'completed', DialALegUUID: 'pl-1' });
-    assert.equal(before - await balance(), 2);
+    assert.equal(before - await balance(), 1);
   });
 
   await step('plivo: recording callback attaches the file', async () => {
@@ -234,7 +234,7 @@ async function main() {
     const today = data.days.at(-1);
     assert.equal(today.answered, 3);
     assert.equal(today.missed, 1);
-    assert.equal(today.minutes, 6);
+    assert.equal(today.minutes, 4);
     const adm = await api('/api/admin/usage?days=7', { token: admin });
     assert.equal(adm.data.days.length, 7);
     assert.ok(adm.data.days.at(-1).revenue >= 5000);

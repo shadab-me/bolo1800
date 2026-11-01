@@ -24,6 +24,14 @@ const PUBLIC_URL = (process.env.PUBLIC_URL || '').replace(/\/+$/, '');
 const IS_PROD = process.env.NODE_ENV === 'production';
 // How long the hangup fallback waits for the Dial callback before billing on its own
 const HANGUP_GRACE_MS = parseInt(process.env.HANGUP_GRACE_MS || '15000');
+// Grace window for 60-second billing pulses (5s grace: a 61-second call is billed as 1 token instead of 2)
+const BILLING_GRACE_SECONDS = parseInt(process.env.BILLING_GRACE_SECONDS || '5');
+
+function calculateTokens(seconds) {
+  if (!seconds || seconds <= 0) return 0;
+  if (seconds <= 60 + BILLING_GRACE_SECONDS) return 1;
+  return Math.ceil((seconds - BILLING_GRACE_SECONDS) / 60);
+}
 
 // In production a missing secret is a hard stop, not a warning
 const startupProblems = [];
@@ -542,7 +550,7 @@ function rejectCall(res, plivo) {
 async function finishCall(callId, { seconds = 0, status, recording }) {
   const log = await get('SELECT user_id FROM call_logs WHERE call_sid = ?', [callId]);
   if (!log) return;
-  const minutes = seconds > 0 ? Math.ceil(seconds / 60) : 0;
+  const minutes = calculateTokens(seconds);
   const result = await run(
     `UPDATE call_logs SET duration_seconds = ?, minutes_deducted = ?, status = ?,
             recording_file = COALESCE(NULLIF(?, ''), recording_file)
