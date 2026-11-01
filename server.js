@@ -12,9 +12,9 @@ const JWT_SECRET = process.env.JWT_SECRET || DEFAULT_SECRET;
 // Optional shared secret the carrier must send as ?token=... on webhook URLs
 const WEBHOOK_TOKEN = process.env.WEBHOOK_TOKEN || '';
 const UPI_ID = process.env.UPI_ID || 'bolo1800@upi';
-// Your blended telecom cost per billed minute (inbound toll-free leg + forward leg), in ₹.
-// ~₹0.50 per leg on CPaaS rates (Vobiz/Edesy), so ~₹1.00 for a forwarded call.
-const COST_PER_MIN = parseFloat(process.env.COST_PER_MIN || '1.00');
+// Your blended telecom cost per billed token/minute (inbound toll-free leg + forward leg), in ₹.
+// Set to ₹0.75 by default (wholesale cost: ₹0.70 - ₹0.80) to maximize your profit margin.
+const COST_PER_MIN = parseFloat(process.env.COST_PER_MIN || '0.75');
 // Which carrier XML to answer with when a request doesn't identify itself: 'plivo', 'vobiz' or 'twilio'.
 // Vobiz uses Plivo's XML verbs and callback names, so both take the same path.
 const PROVIDER = (process.env.PROVIDER || 'plivo').toLowerCase();
@@ -37,13 +37,13 @@ if (IS_PROD && startupProblems.length) {
 }
 
 // Price list lives on the server so a client cannot submit their own price
-// Matches the market offer: 3,000 minutes for ₹5,000 over 3 months, then ₹1/min
+// Matches the market offer: 3,000 Tokens for ₹5,000 over 3 months, then ₹1/token
 const TOPUP_PLANS = [
-  { id: 'starter', name: '500 minutes', minutes: 500, amount: 500 },
-  { id: 'popular', name: '1,000 minutes', minutes: 1000, amount: 1000, featured: true },
-  { id: 'pro', name: '2,000 minutes', minutes: 2000, amount: 2000 }
+  { id: 'starter', name: '500 Tokens', minutes: 500, amount: 500 },
+  { id: 'popular', name: '1,000 Tokens', minutes: 1000, amount: 1000, featured: true },
+  { id: 'pro', name: '2,000 Tokens', minutes: 2000, amount: 2000 }
 ];
-const PACKAGE = { minutes: 3000, months: 3, amount: 5000 };
+const PACKAGE = { minutes: 3000, months: 3, amount: 5000, name: '3,000 Tokens Package' };
 // When the bundle runs out, calls keep ringing and each extra minute is owed at `rate`, up to `cap`
 // unpaid minutes per client, so one client can never run up an unlimited bill.
 const OVERAGE = {

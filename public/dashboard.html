@@ -77,15 +77,15 @@
         <div class="vp-hero p-6 md:col-span-2 xl:col-span-1">
           <div class="relative z-10">
             <div class="flex items-center justify-between">
-              <p class="text-sm font-medium text-blue-100">Minutes left</p>
-              <span class="vp-chip w-9 h-9 bg-white/15 text-white"><i data-icon="clock" class="w-[18px] h-[18px]"></i></span>
+              <p class="text-sm font-medium text-blue-100">Tokens left</p>
+              <span class="vp-chip w-9 h-9 bg-white/15 text-white"><i data-icon="wallet" class="w-[18px] h-[18px]"></i></span>
             </div>
             <p id="stat-balance" class="mt-3 text-5xl font-bold tabular"><span class="vp-skeleton inline-block w-32 h-12 opacity-30"></span></p>
             <div class="mt-3 flex flex-wrap items-center gap-2 min-h-[24px]">
               <span id="stat-low" class="hidden"></span>
               <p id="stat-extra" class="hidden"></p>
             </div>
-            <p class="mt-4 text-xs text-blue-100/90">Calls deduct minutes as they happen. After the bundle, calls continue at the per-minute rate.</p>
+            <p class="mt-4 text-xs text-blue-100/90">1 Token = 1 call minute. Tokens deduct automatically as calls happen in real-time.</p>
           </div>
         </div>
         <div class="vp-card p-5 flex flex-col">
@@ -131,7 +131,7 @@
         <div class="overflow-x-auto">
           <table class="vp-table">
             <thead>
-              <tr><th>Caller</th><th>Time</th><th>Line</th><th>Answered by</th><th>Duration</th><th>Billed</th><th>Status</th><th>Recording</th></tr>
+              <tr><th>Caller</th><th>Time</th><th>Line</th><th>Answered by</th><th>Duration</th><th>Tokens</th><th>Status</th><th>Recording</th></tr>
             </thead>
             <tbody id="calls-body"><tr><td colspan="8"><div class="vp-skeleton h-6"></div></td></tr></tbody>
           </table>
@@ -232,17 +232,17 @@
 
       const bal = u.minutes_balance;
       const balEl = document.getElementById('stat-balance');
-      balEl.textContent = VP.num(bal);
-      balEl.className = 'mt-3 text-5xl font-bold tabular';
+      balEl.innerHTML = `${VP.num(bal)} <span class="text-2xl font-semibold text-blue-200 ml-2">Tokens</span>`;
+      balEl.className = 'mt-3 text-5xl font-bold tabular flex items-baseline';
       const lowEl = document.getElementById('stat-low');
       lowEl.className = bal <= 200 ? `vp-badge ${bal <= 50 ? 'bg-red-500 text-white' : 'bg-amber-300 text-amber-950'}` : 'hidden';
-      lowEl.innerHTML = bal <= 200 ? VP.icon('alert', 'w-3.5 h-3.5') + (bal <= 50 ? 'Very low balance' : 'Low balance') : '';
+      lowEl.innerHTML = bal <= 200 ? VP.icon('alert', 'w-3.5 h-3.5') + (bal <= 50 ? 'Very low tokens' : 'Low tokens') : '';
       // After the bundle runs out, calls keep working as extra minutes (billed per minute, up to a cap)
       const extra = u.overage_minutes || 0;
       const rate = data.overage_rate ?? 1;
       const canOverage = !!u.overage_enabled && extra < (data.overage_cap ?? Infinity);
       const extraEl = document.getElementById('stat-extra');
-      extraEl.textContent = extra > 0 ? `+${VP.num(extra)} extra minutes used · ${VP.inr(Math.round(extra * rate))} due` : '';
+      extraEl.textContent = extra > 0 ? `+${VP.num(extra)} extra tokens used · ${VP.inr(Math.round(extra * rate))} due` : '';
       extraEl.className = extra > 0 ? 'text-sm font-semibold text-orange-200' : 'hidden';
       const blocked = bal <= 0 && !canOverage;
 
@@ -255,15 +255,15 @@
       daysEl.className = `mt-1 text-sm ${days !== null && days <= 7 ? 'text-red-600 font-semibold' : 'text-slate-600'}`;
 
       document.getElementById('stat-calls').textContent = VP.num(data.usage.calls);
-      document.getElementById('stat-usage').textContent = `calls · ${VP.num(data.usage.answered || 0)} answered · ${VP.num(data.usage.minutes)} min used`;
+      document.getElementById('stat-usage').textContent = `calls · ${VP.num(data.usage.answered || 0)} answered · ${VP.num(data.usage.minutes)} tokens used`;
 
       // Explain why calls might not be ringing through
       const problems = [];
       if (u.status !== 'active') problems.push('Your account is suspended, so incoming calls are being rejected. Contact your account manager.');
-      else if (blocked) problems.push('You have 0 minutes left — callers hear "number unavailable". Contact your account manager to add minutes.');
+      else if (blocked) problems.push('You have 0 tokens left — callers hear "number unavailable". Contact your account manager to add tokens.');
       else if (days !== null && days < 0) problems.push('Your package has expired — callers hear "number unavailable". Contact your account manager to renew.');
-      else if (bal <= 0) problems.push(`Your bundle minutes are used up. Calls still ring through and are charged at ₹${rate}/min — contact your account manager to add minutes.`);
-      else if (bal <= 50) problems.push(`Only ${bal} minutes left. Calls stop when minutes run out — contact your account manager to add more.`);
+      else if (bal <= 0) problems.push(`Your bundle tokens are used up. Calls still ring through and are charged at ₹${rate}/token — contact your account manager to add tokens.`);
+      else if (bal <= 50) problems.push(`Only ${bal} tokens left. Calls stop when tokens run out — contact your account manager to add more.`);
       else if (days !== null && days <= 7) problems.push(`Your package expires in ${days} day${days === 1 ? '' : 's'}.`);
       const banner = document.getElementById('alert-banner');
       if (problems.length) {
@@ -339,7 +339,7 @@
           <td class="whitespace-nowrap">${VP.esc(line)}</td>
           <td class="tabular text-slate-600 text-[13px] max-w-[180px] truncate" title="${VP.esc(c.forwarded_to)}">${VP.esc(c.forwarded_to)}</td>
           <td class="tabular whitespace-nowrap">${VP.esc(VP.duration(c.duration_seconds))}</td>
-          <td class="tabular whitespace-nowrap">${VP.esc(c.minutes_deducted)} min</td>
+          <td class="tabular whitespace-nowrap font-medium text-slate-700">${VP.esc(c.minutes_deducted)} Token${c.minutes_deducted === 1 ? '' : 's'}</td>
           <td>${statusBadge(c.status)}</td>
           <td>${rec}</td>
         </tr>`;

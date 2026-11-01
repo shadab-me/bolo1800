@@ -133,14 +133,14 @@
     <section data-panel="clients" class="hidden">
       <div class="vp-card overflow-hidden">
         <div class="vp-card-head">
-          <div><h2 class="text-base font-bold">All clients</h2><p class="text-xs text-slate-500">Minutes, validity and payments per account</p></div>
+          <div><h2 class="text-base font-bold">All clients</h2><p class="text-xs text-slate-500">Tokens balance, validity and payments per account</p></div>
           <div class="relative w-full sm:w-80">
                         <input id="client-search" type="search" class="vp-input" placeholder="Search company, username, number" aria-label="Search clients">
           </div>
         </div>
         <div class="overflow-x-auto">
           <table class="vp-table">
-            <thead><tr><th>Company</th><th>Numbers</th><th>Minutes left</th><th>Valid until</th><th>Paid</th><th>Status</th><th class="text-right">Actions</th></tr></thead>
+            <thead><tr><th>Company</th><th>Numbers</th><th>Tokens left</th><th>Valid until</th><th>Paid</th><th>Status</th><th class="text-right">Actions</th></tr></thead>
             <tbody id="clients-body"><tr><td colspan="7"><div class="vp-skeleton h-6"></div></td></tr></tbody>
           </table>
         </div>
@@ -211,7 +211,7 @@
       </div>
       <div class="rounded-xl bg-slate-50 border border-slate-200 p-4 grid grid-cols-3 gap-3">
         <p class="col-span-3 vp-label mb-0">Opening package</p>
-        <div><label class="vp-label" for="c-minutes">Minutes</label><input id="c-minutes" type="number" min="0" class="vp-input tabular" required></div>
+        <div><label class="vp-label" for="c-minutes">Tokens</label><input id="c-minutes" type="number" min="0" class="vp-input tabular" value="3000" required></div>
         <div><label class="vp-label" for="c-months">Months</label><input id="c-months" type="number" min="1" max="36" class="vp-input tabular" required></div>
         <div><label class="vp-label" for="c-amount">Collected ₹</label><input id="c-amount" type="number" min="0" class="vp-input tabular" required></div>
         <p class="col-span-3 vp-help mt-0">The amount is recorded as revenue so your margin report stays accurate. Enter 0 for a free trial.</p>
@@ -386,7 +386,7 @@
           <td><div class="flex items-center gap-3"><span class="vp-avatar w-9 h-9 bg-blue-50 text-blue-700 text-xs">${VP.esc(VP.initials(c.company_name))}</span>
             <div class="min-w-0"><p class="font-semibold">${VP.esc(c.company_name)}</p><p class="text-xs text-slate-500">${VP.esc(c.username)}${c.phone ? ' · ' + VP.esc(c.phone) : ''}</p></div></div></td>
           <td>${c.numbers.length ? c.numbers.map(n => `<p class="font-mono text-sm whitespace-nowrap">${VP.esc(VP.prettyNumber(n.number))}</p><p class="text-xs text-slate-500 truncate max-w-[200px]" title="${VP.esc(n.forward_to)}">→ ${VP.esc(n.forward_to)}</p>`).join('') : '<span class="text-sm text-amber-700">None</span>'}</td>
-          <td class="tabular font-semibold ${c.minutes_balance <= 50 ? 'text-red-600' : ''}">${VP.num(c.minutes_balance)}<p class="text-xs font-normal text-slate-500">${VP.num(c.minutes_used)} used</p>${c.overage_minutes > 0 ? `<p class="text-xs font-semibold text-amber-700">+${VP.num(c.overage_minutes)} extra · ${VP.inr(Math.round(c.overage_minutes * (config?.overage?.rate ?? 1)))} due</p>` : ''}${c.overage_enabled ? '' : '<p class="text-xs font-normal text-slate-500">Extra minutes off</p>'}</td>
+          <td class="tabular font-semibold ${c.minutes_balance <= 50 ? 'text-red-600' : ''}">${VP.num(c.minutes_balance)} <span class="text-xs font-normal text-slate-500">Tokens</span><p class="text-xs font-normal text-slate-500">${VP.num(c.minutes_used)} used</p>${c.overage_minutes > 0 ? `<p class="text-xs font-semibold text-amber-700">+${VP.num(c.overage_minutes)} extra · ${VP.inr(Math.round(c.overage_minutes * (config?.overage?.rate ?? 1)))} due</p>` : ''}${c.overage_enabled ? '' : '<p class="text-xs font-normal text-slate-500">Extra tokens off</p>'}</td>
           <td class="whitespace-nowrap">${VP.esc(c.package_expiry_date || '—')}<p class="text-xs ${days !== null && days <= 7 ? 'text-red-600 font-semibold' : 'text-slate-500'}">${days === null ? '' : days < 0 ? 'Expired' : days + ' days left'}</p></td>
           <td class="tabular">${VP.inr(c.revenue)}</td>
           <td><span class="vp-badge ${active ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}">${active ? 'Active' : 'Suspended'}</span></td>
@@ -443,7 +443,7 @@
       const pk = config?.package || { minutes: 3000, months: 3, amount: 5000 };
       document.getElementById('renew-id').value = id;
       document.getElementById('renew-ref').value = '';
-      document.getElementById('renew-summary').innerHTML = `Add <strong>${VP.num(pk.minutes)} minutes</strong> and <strong>${pk.months} months</strong> to <strong>${VP.esc(c.company_name)}</strong>, and record <strong>${VP.inr(pk.amount)}</strong> as paid.`;
+      document.getElementById('renew-summary').innerHTML = `Add <strong>${VP.num(pk.minutes)} Tokens</strong> and <strong>${pk.months} months</strong> to <strong>${VP.esc(c.company_name)}</strong>, and record <strong>${VP.inr(pk.amount)}</strong> as paid.`;
       VP.openModal('renew-modal');
     };
     document.getElementById('renew-form').addEventListener('submit', async e => {

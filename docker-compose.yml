@@ -13,7 +13,7 @@ services:
       - JWT_SECRET=bolo1800_prod_sec_89371948201748291048
       - WEBHOOK_TOKEN=bolo1800_whk_58392019485729104829
       - ADMIN_PASSWORD=admin123
-      - COST_PER_MIN=1.00
+      - COST_PER_MIN=0.75
       - OVERAGE_RATE=1.00
       - OVERAGE_CAP_MIN=500
     volumes:
