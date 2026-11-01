@@ -1,32 +1,17 @@
 services:
-  bolo1800:
+  voicepanel:
     build: .
-    container_name: bolo1800_app
+    container_name: voicepanel_app
     restart: always
-    env_file: .env
+    ports:
+      - "80:3000"
     environment:
       - PORT=3000
       - DATA_DIR=/app/data
+      - NODE_ENV=production
+      - ADMIN_PASSWORD=admin123
+      - COST_PER_MIN=1.00
+      - OVERAGE_RATE=1.00
+      - OVERAGE_CAP_MIN=500
     volumes:
       - ./data:/app/data
-    # Not published: only Caddy reaches it, over HTTPS
-
-  caddy:
-    image: caddy:2.8.4-alpine
-    container_name: bolo1800_caddy
-    restart: always
-    depends_on:
-      - bolo1800
-    ports:
-      - "80:80"
-      - "443:443"
-    environment:
-      - DOMAIN=${DOMAIN}
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - caddy_data:/data
-      - caddy_config:/config
-
-volumes:
-  caddy_data:
-  caddy_config:
