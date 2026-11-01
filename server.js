@@ -530,10 +530,16 @@ const isExotel = (p, req) => {
 const DIAL_STATUS = { 'no-answer': 'no-answer', timeout: 'no-answer', cancel: 'missed', canceled: 'missed', busy: 'busy', failed: 'failed', completed: 'completed' };
 
 function webhookAuth(req, res, next) {
-  if (WEBHOOK_TOKEN && (req.query.token || req.body?.token) !== WEBHOOK_TOKEN) {
-    return res.status(403).send('Forbidden');
+  if (!WEBHOOK_TOKEN) return next();
+  const token = req.query.token || req.query.auth_token || req.query.key || req.body?.token;
+  if (token === WEBHOOK_TOKEN) return next();
+  // Support HTTP Basic Auth if Exotel uses username:password in URL (e.g. http://api:TOKEN@host/...)
+  const authHeader = req.get ? req.get('authorization') || '' : '';
+  if (authHeader.startsWith('Basic ')) {
+    const creds = Buffer.from(authHeader.slice(6), 'base64').toString().split(':');
+    if (creds[1] === WEBHOOK_TOKEN || creds[0] === WEBHOOK_TOKEN) return next();
   }
-  next();
+  return res.status(403).send('Forbidden');
 }
 
 function hookUrl(req, name) {
