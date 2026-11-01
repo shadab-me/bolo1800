@@ -629,10 +629,19 @@ app.all('/api/webhook/incoming', webhookAuth, h(async (req, res) => {
   const callerId = xmlEscape(dialedRaw || dialedNumber);
 
   if (isExotel(params, req)) {
-    // Exotel Connect Applet (Application URL): expects 200 OK with comma-separated numbers in text/plain
-    // Exotel Passthru Applet: evaluates 200 OK as success branch
-    res.set('Content-Type', 'text/plain');
-    return res.status(200).send(targetNumbers.join(','));
+    if (params.format === 'text') {
+      res.set('Content-Type', 'text/plain');
+      return res.status(200).send(targetNumbers.join(','));
+    }
+    // Exotel Programmable Connect (Dynamic URL JSON mode):
+    // https://support.exotel.com/support/solutions/articles/3000096873-programmable-connect-working-with-connect-applet-dynamic-url-
+    return res.status(200).json({
+      destination: {
+        numbers: targetNumbers
+      },
+      record: assignment.record_calls ? true : false,
+      max_conversation_duration: timeLimit
+    });
   }
 
   if (plivo) {

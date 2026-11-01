@@ -296,13 +296,22 @@ async function main() {
     assert.equal(c.revenue, 2);
   });
 
-  await step('exotel: GET query request returns HTTP 200 with text/plain forwarding numbers', async () => {
-    // Exotel sends GET with CallSid, CallFrom, CallTo
+  await step('exotel: GET query request returns HTTP 200 with JSON destination numbers', async () => {
+    // Exotel Programmable Connect dynamic URL sends GET with CallSid, CallFrom, CallTo
     const qs = 'CallSid=exo_123&CallFrom=919876543210&CallTo=18002009999&Direction=inbound';
     const res = await fetch(`${base}/api/webhook/incoming?token=test-webhook-token&${qs}`);
     assert.equal(res.status, 200);
-    assert.match(res.headers.get('content-type'), /text\/plain/);
-    const text = await res.text();
+    assert.match(res.headers.get('content-type'), /application\/json/);
+    const data = await res.json();
+    assert.ok(data.destination);
+    assert.ok(Array.isArray(data.destination.numbers));
+    assert.deepEqual(data.destination.numbers, ['+919876543210', '+919811223344']);
+
+    // Also support format=text
+    const textRes = await fetch(`${base}/api/webhook/incoming?token=test-webhook-token&${qs}&format=text`);
+    assert.equal(textRes.status, 200);
+    assert.match(textRes.headers.get('content-type'), /text\/plain/);
+    const text = await textRes.text();
     assert.match(text, /\+919876543210/);
 
     // Exotel call-complete returns 200 OK
