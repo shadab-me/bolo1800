@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 340" role="img" aria-labelledby="t d">
+  <title id="t">How a call is routed</title>
+  <desc id="d">A customer dials your 1800 number. Bolo1800 answers in the cloud and rings every mobile in your team at once. Whoever picks up first gets the call.</desc>
+  <style>
+    text{font-family:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif}
+    .flow{stroke-dasharray:6 8;animation:f 1.2s linear infinite}
+    .pulse{transform-origin:280px 150px;animation:p 2.4s ease-out infinite}
+    @keyframes f{to{stroke-dashoffset:-28}}
+    @keyframes p{0%{opacity:.5;transform:scale(.8)}100%{opacity:0;transform:scale(1.5)}}
+    @media (prefers-reduced-motion:reduce){.flow,.pulse{animation:none}}
+  </style>
+  <defs>
+    <linearGradient id="hub" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3B82F6"/><stop offset="1" stop-color="#1D4ED8"/></linearGradient>
+    <filter id="sh" x="-20%" y="-20%" width="140%" height="160%"><feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#0F172A" flood-opacity=".18"/></filter>
+  </defs>
+
+  <!-- connectors -->
+  <path class="flow" d="M118 150 C170 150 190 150 226 150" stroke="#60A5FA" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <path class="flow" d="M334 150 C380 150 380 70 420 70" stroke="#60A5FA" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <path class="flow" d="M334 150 C380 150 380 150 420 150" stroke="#F97316" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <path class="flow" d="M334 150 C380 150 380 230 420 230" stroke="#60A5FA" stroke-width="3" fill="none" stroke-linecap="round"/>
+
+  <!-- caller phone -->
+  <g filter="url(#sh)">
+    <rect x="40" y="82" width="78" height="136" rx="16" fill="#fff"/>
+    <rect x="47" y="96" width="64" height="100" rx="6" fill="#EFF6FF"/>
+    <rect x="68" y="88" width="22" height="3" rx="1.5" fill="#CBD5E1"/>
+    <circle cx="79" cy="207" r="4" fill="#CBD5E1"/>
+  </g>
+  <text x="79" y="124" text-anchor="middle" font-size="9" font-weight="600" fill="#64748B">Calling…</text>
+  <text x="79" y="142" text-anchor="middle" font-size="10" font-weight="700" fill="#1E293B">1800 200</text>
+  <text x="79" y="156" text-anchor="middle" font-size="10" font-weight="700" fill="#1E293B">9999</text>
+  <circle cx="79" cy="178" r="10" fill="#16A34A"/>
+  <path d="M74.5 176c0-.8.6-1.4 1.4-1.4h.9l.6 1.7-.7.6c.5 1 1.3 1.9 2.4 2.4l.6-.7 1.7.6v.9c0 .8-.6 1.4-1.4 1.4-3 0-5.5-2.5-5.5-5.5z" fill="#fff"/>
+  <text x="79" y="248" text-anchor="middle" font-size="13" font-weight="700" fill="#94A3B8">Customer</text>
+
+  <!-- cloud hub -->
+  <circle class="pulse" cx="280" cy="150" r="54" fill="#3B82F6"/>
+  <g filter="url(#sh)"><circle cx="280" cy="150" r="54" fill="url(#hub)"/></g>
+  <path d="M262 140c0-2 1.6-3.6 3.6-3.6h2.3c1 0 1.9.7 2.2 1.6l1.3 4.3c.3.9 0 1.9-.7 2.4l-1.7 1.4c1.4 2.9 3.8 5.2 6.6 6.6l1.4-1.7c.6-.7 1.6-1 2.4-.7l4.3 1.3c.9.3 1.6 1.2 1.6 2.2v2.3c0 2-1.6 3.6-3.6 3.6-10.6 0-19.7-9.1-19.7-19.7z" fill="#fff"/>
+  <path d="M283 135a9 9 0 0 1 8 8M283 140.5a3.5 3.5 0 0 1 3 3" stroke="#FDBA74" stroke-width="2.4" stroke-linecap="round" fill="none"/>
+  <text x="280" y="236" text-anchor="middle" font-size="13" font-weight="700" fill="#94A3B8">Bolo1800 cloud</text>
+  <text x="280" y="254" text-anchor="middle" font-size="11" fill="#94A3B8">rings your team at once</text>
+
+  <!-- team mobiles -->
+  <g filter="url(#sh)">
+    <rect x="420" y="46" width="118" height="48" rx="12" fill="#fff"/>
+    <rect x="420" y="126" width="118" height="48" rx="12" fill="#fff" stroke="#F97316" stroke-width="2"/>
+    <rect x="420" y="206" width="118" height="48" rx="12" fill="#fff"/>
+  </g>
+  <circle cx="444" cy="70" r="12" fill="#DBEAFE"/><text x="444" y="74" text-anchor="middle" font-size="11" font-weight="700" fill="#1D4ED8">S</text>
+  <text x="464" y="66" font-size="12" font-weight="700" fill="#1E293B">Sales</text>
+  <text x="464" y="81" font-size="10" fill="#64748B">Ringing</text>
+
+  <circle cx="444" cy="150" r="12" fill="#FFEDD5"/><text x="444" y="154" text-anchor="middle" font-size="11" font-weight="700" fill="#C2410C">R</text>
+  <text x="464" y="146" font-size="12" font-weight="700" fill="#1E293B">Reception</text>
+  <text x="464" y="161" font-size="10" font-weight="600" fill="#16A34A">Answered</text>
+
+  <circle cx="444" cy="230" r="12" fill="#DBEAFE"/><text x="444" y="234" text-anchor="middle" font-size="11" font-weight="700" fill="#1D4ED8">O</text>
+  <text x="464" y="226" font-size="12" font-weight="700" fill="#1E293B">Owner</text>
+  <text x="464" y="241" font-size="10" fill="#64748B">Ringing</text>
+  <text x="479" y="284" text-anchor="middle" font-size="13" font-weight="700" fill="#94A3B8">Your team</text>
+</svg>

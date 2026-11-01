@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard · Bolo1800</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/svg+xml" href="/static/img/favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/static/img/favicon-32.png">
+  <link rel="apple-touch-icon" href="/static/img/favicon-512.png">
+  <meta property="og:title" content="Dashboard · Bolo1800">
+  <meta property="og:image" content="/static/img/og-image.png">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    // One simple font everywhere: Tailwind's font-sans and font-mono both use Inter, numbers stay aligned via tabular-nums
+    tailwind.config = { theme: { extend: { fontFamily: {
+      sans: ['Inter', 'system-ui', '-apple-system', 'Segoe UI', 'sans-serif'],
+      mono: ['Inter', 'system-ui', '-apple-system', 'Segoe UI', 'sans-serif'],
+    } } } };
+  </script>
+  <link rel="stylesheet" href="/static/theme.css">
+  <script src="/static/common.js"></script>
+</head>
+<body class="min-h-screen">
+  <!-- Sidebar (drawer on mobile) -->
+  <aside class="vp-sidebar" aria-label="Main navigation">
+    <div class="h-16 px-5 flex items-center gap-2.5 shrink-0">
+      <img src="/static/img/logo-mark.svg" alt="" width="34" height="34" class="w-[34px] h-[34px]">
+      <span class="text-[17px] font-bold tracking-tight text-white">Bolo<span class="text-blue-400">1800</span></span>
+    </div>
+    <nav class="flex-1 overflow-y-auto px-3 pb-4">
+      <p class="vp-nav-label">Workspace</p>
+      <a href="#overview" class="vp-nav-item" aria-current="true"><i data-icon="grid" class="w-[18px] h-[18px]"></i>Overview</a>
+      <a href="#numbers" class="vp-nav-item"><i data-icon="phone" class="w-[18px] h-[18px]"></i>My numbers</a>
+      <a href="#calls" class="vp-nav-item"><i data-icon="incoming" class="w-[18px] h-[18px]"></i>Call logs</a>
+      <a href="#usage" class="vp-nav-item"><i data-icon="chart" class="w-[18px] h-[18px]"></i>Usage</a>
+      <div class="mt-6 mx-1 rounded-2xl p-4 bg-white/5 ring-1 ring-white/10">
+        <span class="vp-chip w-9 h-9 bg-orange-500/15 text-orange-300"><i data-icon="zap" class="w-4 h-4"></i></span>
+        <p class="mt-3 text-sm font-semibold text-white">Need more minutes?</p>
+        <p class="mt-1 text-xs text-slate-400 leading-relaxed">Contact your account manager to top up with UPI. Minutes are added in a minute.</p>
+      </div>
+    </nav>
+    <div class="p-3 border-t border-white/10">
+      <div class="flex items-center gap-3 rounded-xl p-2">
+        <span id="company-avatar" class="vp-avatar w-9 h-9 bg-blue-500/20 text-blue-200 text-xs">··</span>
+        <div class="min-w-0 flex-1">
+          <p id="company-name" class="text-sm font-semibold text-white truncate"></p>
+          <p class="text-xs text-slate-400">Client account</p>
+        </div>
+        <button class="vp-btn vp-btn-icon vp-btn-sm text-slate-400 hover:text-white hover:bg-white/10" onclick="VP.logout()" aria-label="Sign out" title="Sign out"><i data-icon="logout" class="w-4 h-4"></i></button>
+      </div>
+    </div>
+  </aside>
+  <div class="vp-scrim" aria-hidden="true"></div>
+
+  <div class="vp-main">
+    <header class="vp-topbar">
+      <div class="h-16 px-4 sm:px-8 flex items-center justify-between gap-4">
+        <div class="flex items-center gap-3 min-w-0">
+          <button class="vp-menu-btn vp-btn vp-btn-ghost vp-btn-icon" data-drawer aria-label="Open menu"><i data-icon="menu" class="w-5 h-5"></i></button>
+          <div class="min-w-0">
+            <h1 class="text-lg font-bold leading-tight">Overview</h1>
+            <p class="text-xs text-slate-500 hidden sm:block">Your 1800 lines, calls and minutes</p>
+          </div>
+        </div>
+        <span id="line-status" class="vp-badge bg-slate-100 text-slate-600"><span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>Checking…</span>
+      </div>
+    </header>
+
+    <main class="px-4 sm:px-8 py-6 sm:py-8 space-y-6 max-w-[1280px]">
+      <div id="alert-banner" class="hidden"></div>
+
+      <!-- Summary: blue hero for minutes, white KPI cards beside it -->
+      <section id="overview" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-[1.4fr_1fr_1fr] gap-4 scroll-mt-24" aria-label="Account summary">
+        <div class="vp-hero p-6 md:col-span-2 xl:col-span-1">
+          <div class="relative z-10">
+            <div class="flex items-center justify-between">
+              <p class="text-sm font-medium text-blue-100">Minutes left</p>
+              <span class="vp-chip w-9 h-9 bg-white/15 text-white"><i data-icon="clock" class="w-[18px] h-[18px]"></i></span>
+            </div>
+            <p id="stat-balance" class="mt-3 text-5xl font-bold tabular"><span class="vp-skeleton inline-block w-32 h-12 opacity-30"></span></p>
+            <div class="mt-3 flex flex-wrap items-center gap-2 min-h-[24px]">
+              <span id="stat-low" class="hidden"></span>
+              <p id="stat-extra" class="hidden"></p>
+            </div>
+            <p class="mt-4 text-xs text-blue-100/90">Calls deduct minutes as they happen. After the bundle, calls continue at the per-minute rate.</p>
+          </div>
+        </div>
+        <div class="vp-card p-5 flex flex-col">
+          <div class="flex items-center justify-between">
+            <p class="text-sm font-medium text-slate-600">Package valid until</p>
+            <span class="vp-chip bg-violet-50 text-violet-600"><i data-icon="calendar" class="w-5 h-5"></i></span>
+          </div>
+          <p id="stat-expiry" class="mt-3 text-2xl font-bold"><span class="vp-skeleton inline-block w-32 h-7"></span></p>
+          <p id="stat-days" class="mt-1 text-sm text-slate-600"></p>
+        </div>
+        <div class="vp-card p-5 flex flex-col">
+          <div class="flex items-center justify-between">
+            <p class="text-sm font-medium text-slate-600">Calls this month</p>
+            <span class="vp-chip bg-emerald-50 text-emerald-600"><i data-icon="incoming" class="w-5 h-5"></i></span>
+          </div>
+          <p id="stat-calls" class="mt-3 text-3xl font-bold tabular"><span class="vp-skeleton inline-block w-16 h-8"></span></p>
+          <p id="stat-usage" class="mt-1 text-sm text-slate-600"></p>
+        </div>
+      </section>
+
+      <!-- Numbers -->
+      <section id="numbers" class="scroll-mt-24" aria-labelledby="numbers-title">
+        <div class="flex items-end justify-between mb-3">
+          <div>
+            <h2 id="numbers-title" class="text-lg font-bold">Your numbers</h2>
+            <p class="text-sm text-slate-500">Choose which mobiles ring when a customer dials</p>
+          </div>
+        </div>
+        <div id="numbers-list" class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div class="vp-card p-5"><div class="vp-skeleton h-24"></div></div>
+        </div>
+      </section>
+
+      <!-- Call logs -->
+      <section id="calls" class="vp-card overflow-hidden scroll-mt-24" aria-labelledby="calls-title">
+        <div class="vp-card-head">
+          <div>
+            <h2 id="calls-title" class="text-lg font-bold">Recent calls</h2>
+            <p class="text-xs text-slate-500 flex items-center gap-1.5"><span class="vp-pulse text-emerald-500"></span>Live · refreshes every 15 seconds</p>
+          </div>
+          <button class="vp-btn vp-btn-secondary vp-btn-sm" id="refresh-calls" aria-label="Refresh calls"><i data-icon="refresh" class="w-4 h-4"></i><span class="hidden sm:inline">Refresh</span></button>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="vp-table">
+            <thead>
+              <tr><th>Caller</th><th>Time</th><th>Line</th><th>Answered by</th><th>Duration</th><th>Billed</th><th>Status</th><th>Recording</th></tr>
+            </thead>
+            <tbody id="calls-body"><tr><td colspan="8"><div class="vp-skeleton h-6"></div></td></tr></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Usage chart -->
+      <section id="usage" class="vp-card scroll-mt-24" aria-labelledby="usage-title">
+        <div class="vp-card-head">
+          <div>
+            <h2 id="usage-title" class="text-lg font-bold">Calls per day</h2>
+            <p class="text-sm text-slate-500">Answered and missed calls, with minutes used</p>
+          </div>
+          <div class="vp-seg" role="group" aria-label="Chart range">
+            <button type="button" data-range="7" aria-pressed="false">7 days</button>
+            <button type="button" data-range="30" aria-pressed="true">30 days</button>
+            <button type="button" data-range="90" aria-pressed="false">90 days</button>
+          </div>
+        </div>
+        <div class="p-5">
+          <dl id="usage-totals" class="grid grid-cols-2 sm:grid-cols-4 gap-3"></dl>
+          <ul class="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-sm text-slate-700" aria-label="Legend">
+            <li class="flex items-center gap-2"><span class="w-3.5 h-3.5 rounded bg-blue-600"></span>Answered (solid bar)</li>
+            <li class="flex items-center gap-2"><svg width="14" height="14" aria-hidden="true"><defs><pattern id="lg-h" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="5" height="5" fill="#EA580C" opacity=".35"/><line x1="0" y1="0" x2="0" y2="5" stroke="#EA580C" stroke-width="2.5"/></pattern></defs><rect width="14" height="14" rx="3" fill="url(#lg-h)"/></svg>Missed (striped bar)</li>
+            <li class="flex items-center gap-2"><svg width="22" height="14" aria-hidden="true"><line x1="1" y1="7" x2="21" y2="7" stroke="#0F172A" stroke-width="2.25" stroke-dasharray="5 4" stroke-linecap="round"/></svg>Minutes used (dashed line)</li>
+          </ul>
+          <div id="usage-chart" class="mt-3"><div class="vp-skeleton h-60"></div></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Edit forwarding modal -->
+  <div id="forward-modal" data-modal class="vp-modal hidden fixed inset-0 z-50 items-end sm:items-center justify-center p-0 sm:p-4" role="dialog" aria-modal="true" aria-labelledby="forward-title">
+    <form id="forward-form" class="bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl p-6 space-y-4">
+      <div class="flex items-start justify-between">
+        <div class="flex items-center gap-3">
+          <span class="vp-chip bg-blue-50 text-blue-600"><i data-icon="route" class="w-5 h-5"></i></span>
+          <div>
+            <h3 id="forward-title" class="text-lg font-bold">Call forwarding</h3>
+            <p id="forward-number" class="text-sm text-slate-600 tabular"></p>
+          </div>
+        </div>
+        <button type="button" data-close="forward-modal" class="vp-btn vp-btn-ghost vp-btn-icon -mr-2 -mt-1" aria-label="Close"><i data-icon="x" class="w-5 h-5"></i></button>
+      </div>
+      <input type="hidden" id="forward-id">
+      <div>
+        <label class="vp-label" for="forward-label">Line name</label>
+        <input id="forward-label" class="vp-input" maxlength="40" placeholder="Sales, Support, Google Ads…">
+      </div>
+      <div>
+        <label class="vp-label" for="forward-to">Ring these mobiles</label>
+        <textarea id="forward-to" class="vp-input font-mono" rows="3" placeholder="9876543210, 9811223344" required></textarea>
+        <p class="vp-help">Separate with commas. All of them ring together — whoever picks up first gets the call.</p>
+      </div>
+      <div>
+        <label class="vp-label" for="forward-timeout">Ring for</label>
+        <select id="forward-timeout" class="vp-input">
+          <option value="15">15 seconds</option><option value="20">20 seconds</option><option value="30">30 seconds</option>
+          <option value="45">45 seconds</option><option value="60">60 seconds</option>
+        </select>
+      </div>
+      <div class="flex gap-3 pt-2">
+        <button type="button" data-close="forward-modal" class="vp-btn vp-btn-secondary flex-1">Cancel</button>
+        <button type="submit" class="vp-btn vp-btn-primary flex-1">Save</button>
+      </div>
+    </form>
+  </div>
+
+  <script>
+    const { token, user } = VP.session();
+    if (!token || !user) window.location.replace('/login');
+    if (user?.role === 'admin') window.location.replace('/admin');
+
+    let numbers = [];
+
+    const STATUS = {
+      completed: ['Answered', 'bg-emerald-50 text-emerald-700'],
+      answered: ['Answered', 'bg-emerald-50 text-emerald-700'],
+      initiated: ['Ringing', 'bg-blue-50 text-blue-700'],
+      'no-answer': ['Missed', 'bg-amber-50 text-amber-800'],
+      missed: ['Missed', 'bg-amber-50 text-amber-800'],
+      busy: ['Busy', 'bg-amber-50 text-amber-800'],
+      failed: ['Failed', 'bg-red-50 text-red-700'],
+      canceled: ['Caller hung up', 'bg-slate-100 text-slate-700']
+    };
+    const statusBadge = s => {
+      const [label, cls] = STATUS[s] || [s || '—', 'bg-slate-100 text-slate-700'];
+      return `<span class="vp-badge ${cls}"><span class="w-1.5 h-1.5 rounded-full bg-current opacity-70"></span>${VP.esc(label)}</span>`;
+    };
+
+    async function loadDetails() {
+      const data = await VP.api('/api/client/details');
+      const u = data.user;
+      numbers = data.numbers;
+      document.getElementById('company-name').textContent = u.company_name;
+      document.getElementById('company-avatar').textContent = VP.initials(u.company_name);
+
+      const bal = u.minutes_balance;
+      const balEl = document.getElementById('stat-balance');
+      balEl.textContent = VP.num(bal);
+      balEl.className = 'mt-3 text-5xl font-bold tabular';
+      const lowEl = document.getElementById('stat-low');
+      lowEl.className = bal <= 200 ? `vp-badge ${bal <= 50 ? 'bg-red-500 text-white' : 'bg-amber-300 text-amber-950'}` : 'hidden';
+      lowEl.innerHTML = bal <= 200 ? VP.icon('alert', 'w-3.5 h-3.5') + (bal <= 50 ? 'Very low balance' : 'Low balance') : '';
+      // After the bundle runs out, calls keep working as extra minutes (billed per minute, up to a cap)
+      const extra = u.overage_minutes || 0;
+      const rate = data.overage_rate ?? 1;
+      const canOverage = !!u.overage_enabled && extra < (data.overage_cap ?? Infinity);
+      const extraEl = document.getElementById('stat-extra');
+      extraEl.textContent = extra > 0 ? `+${VP.num(extra)} extra minutes used · ${VP.inr(Math.round(extra * rate))} due` : '';
+      extraEl.className = extra > 0 ? 'text-sm font-semibold text-orange-200' : 'hidden';
+      const blocked = bal <= 0 && !canOverage;
+
+      const days = VP.daysLeft(u.package_expiry_date);
+      document.getElementById('stat-expiry').textContent = u.package_expiry_date
+        ? new Date(u.package_expiry_date + 'T00:00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+        : 'No expiry';
+      const daysEl = document.getElementById('stat-days');
+      daysEl.textContent = days === null ? '' : days < 0 ? 'Expired' : days === 0 ? 'Expires today' : `${days} day${days === 1 ? '' : 's'} left`;
+      daysEl.className = `mt-1 text-sm ${days !== null && days <= 7 ? 'text-red-600 font-semibold' : 'text-slate-600'}`;
+
+      document.getElementById('stat-calls').textContent = VP.num(data.usage.calls);
+      document.getElementById('stat-usage').textContent = `calls · ${VP.num(data.usage.answered || 0)} answered · ${VP.num(data.usage.minutes)} min used`;
+
+      // Explain why calls might not be ringing through
+      const problems = [];
+      if (u.status !== 'active') problems.push('Your account is suspended, so incoming calls are being rejected. Contact your account manager.');
+      else if (blocked) problems.push('You have 0 minutes left — callers hear "number unavailable". Contact your account manager to add minutes.');
+      else if (days !== null && days < 0) problems.push('Your package has expired — callers hear "number unavailable". Contact your account manager to renew.');
+      else if (bal <= 0) problems.push(`Your bundle minutes are used up. Calls still ring through and are charged at ₹${rate}/min — contact your account manager to add minutes.`);
+      else if (bal <= 50) problems.push(`Only ${bal} minutes left. Calls stop when minutes run out — contact your account manager to add more.`);
+      else if (days !== null && days <= 7) problems.push(`Your package expires in ${days} day${days === 1 ? '' : 's'}.`);
+      const banner = document.getElementById('alert-banner');
+      if (problems.length) {
+        const severe = u.status !== 'active' || blocked || (days !== null && days < 0);
+        banner.className = `flex items-start gap-3 rounded-xl border px-4 py-3 ${severe ? 'bg-red-50 border-red-200 text-red-800' : 'bg-amber-50 border-amber-200 text-amber-900'}`;
+        banner.innerHTML = `${VP.icon('alert', 'w-5 h-5 shrink-0 mt-0.5')}<p class="text-sm font-medium flex-1">${VP.esc(problems[0])}</p>`;
+      } else {
+        banner.className = 'hidden';
+      }
+
+      renderNumbers(u.status === 'active' && !blocked && !(days !== null && days < 0));
+    }
+
+    function renderNumbers(live) {
+      const list = document.getElementById('numbers-list');
+      const pill = document.getElementById('line-status');
+      pill.className = `vp-badge ${!numbers.length ? 'bg-slate-100 text-slate-600' : live ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200' : 'bg-red-50 text-red-700 ring-1 ring-red-200'}`;
+      pill.innerHTML = !numbers.length ? '<span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>No line yet'
+        : live ? '<span class="vp-pulse text-emerald-500"></span>Lines live' : '<span class="w-1.5 h-1.5 rounded-full bg-red-500"></span>Not receiving calls';
+      if (!numbers.length) {
+        list.innerHTML = `<div class="vp-card p-8 text-center lg:col-span-2">
+          <span class="inline-flex w-12 h-12 rounded-full bg-slate-100 text-slate-500 items-center justify-center">${VP.icon('phone')}</span>
+          <p class="mt-3 font-semibold">No number assigned yet</p>
+          <p class="text-sm text-slate-600">Your account manager will assign your 1800 number shortly.</p></div>`;
+        return;
+      }
+      list.innerHTML = numbers.map(n => {
+        const targets = n.forward_to.split(',').map(s => s.trim()).filter(Boolean);
+        return `<article class="vp-card p-5">
+          <div class="flex items-start justify-between gap-3">
+            <div class="flex items-center gap-3 min-w-0">
+              <span class="vp-chip w-11 h-11 bg-blue-600 text-white shadow-sm">${VP.icon('phone', 'w-5 h-5')}</span>
+              <div class="min-w-0">
+                <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">${VP.esc(n.label || 'Main Line')}</p>
+                <p class="text-[22px] font-bold tabular leading-tight">${VP.esc(VP.prettyNumber(n.phone_number))}</p>
+              </div>
+            </div>
+            <span class="vp-badge ${live ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}">
+              <span class="w-1.5 h-1.5 rounded-full ${live ? 'bg-emerald-500' : 'bg-red-500'}"></span>${live ? 'Live' : 'Not receiving calls'}
+            </span>
+          </div>
+          <div class="mt-4 pt-4 border-t border-slate-100">
+            <p class="text-xs font-semibold text-slate-500 mb-2">Rings ${targets.length > 1 ? 'all of these together' : 'this mobile'} for ${VP.esc(n.ring_timeout || 30)}s</p>
+            <div class="flex flex-wrap gap-2">${targets.map(t => `<span class="vp-badge bg-slate-50 ring-1 ring-slate-200 text-slate-700 tabular py-1">${VP.icon('phone', 'w-3 h-3 text-slate-400')}${VP.esc(VP.prettyNumber(t))}</span>`).join('')}</div>
+          </div>
+          <button class="mt-5 vp-btn vp-btn-secondary vp-btn-sm" onclick="openForwarding(${Number(n.id)})">${VP.icon('route', 'w-4 h-4')}Edit forwarding</button>
+        </article>`;
+      }).join('');
+    }
+
+    async function loadCalls() {
+      const { logs } = await VP.api('/api/client/cdr?limit=20');
+      const body = document.getElementById('calls-body');
+      if (!logs.length) {
+        body.innerHTML = `<tr><td colspan="8" class="py-12"><div class="flex flex-col items-center text-center">
+          <img src="/static/img/empty-calls.webp" width="220" height="150" alt="" class="w-48 h-auto drop-shadow-sm mb-2">
+          <p class="mt-3 font-semibold text-slate-900">No calls yet</p>
+          <p class="text-sm text-slate-600 max-w-sm">Share your 1800 number on your website, Google listing and ads. Calls show up here within seconds.</p>
+          ${numbers[0] ? `<button class="mt-3 vp-btn vp-btn-secondary vp-btn-sm" onclick="openForwarding(${Number(numbers[0].id)})">${VP.icon('route', 'w-4 h-4')}Check forwarding</button>` : ''}
+        </div></td></tr>`;
+        return;
+      }
+      body.innerHTML = logs.map(c => {
+        const line = String(c.dialed_number).match(/\[(.*)\]/)?.[1] || VP.prettyNumber(c.dialed_number);
+        const rec = /^https?:\/\//.test(c.recording_file || '')
+          ? `<a href="${VP.esc(c.recording_file)}" target="_blank" rel="noopener" class="inline-flex items-center gap-1 text-blue-700 font-semibold hover:underline">${VP.icon('play', 'w-3.5 h-3.5')}Play</a>`
+          : '<span class="text-slate-400">—</span>';
+        return `<tr>
+          <td class="whitespace-nowrap"><div class="flex items-center gap-3">
+            <span class="vp-avatar w-8 h-8 bg-slate-100 text-slate-500">${VP.icon('incoming', 'w-4 h-4')}</span>
+            <span class="font-semibold tabular">${VP.esc(VP.prettyNumber(c.caller_number))}</span></div></td>
+          <td class="whitespace-nowrap text-slate-600">${VP.esc(VP.dateTime(c.created_at))}</td>
+          <td class="whitespace-nowrap">${VP.esc(line)}</td>
+          <td class="tabular text-slate-600 text-[13px] max-w-[180px] truncate" title="${VP.esc(c.forwarded_to)}">${VP.esc(c.forwarded_to)}</td>
+          <td class="tabular whitespace-nowrap">${VP.esc(VP.duration(c.duration_seconds))}</td>
+          <td class="tabular whitespace-nowrap">${VP.esc(c.minutes_deducted)} min</td>
+          <td>${statusBadge(c.status)}</td>
+          <td>${rec}</td>
+        </tr>`;
+      }).join('');
+    }
+
+    window.openForwarding = id => {
+      const n = numbers.find(x => x.id === id);
+      if (!n) return;
+      document.getElementById('forward-id').value = n.id;
+      document.getElementById('forward-number').textContent = VP.prettyNumber(n.phone_number);
+      document.getElementById('forward-label').value = n.label || '';
+      document.getElementById('forward-to').value = n.forward_to;
+      const sel = document.getElementById('forward-timeout');
+      if (![...sel.options].some(o => o.value == n.ring_timeout)) sel.add(new Option(`${n.ring_timeout} seconds`, n.ring_timeout));
+      sel.value = n.ring_timeout || 30;
+      VP.openModal('forward-modal');
+    };
+
+    document.getElementById('forward-form').addEventListener('submit', async e => {
+      e.preventDefault();
+      await VP.busy(e.submitter, async () => {
+        try {
+          const r = await VP.api('/api/client/update-forwarding', {
+            number_id: document.getElementById('forward-id').value,
+            label: document.getElementById('forward-label').value,
+            forward_to: document.getElementById('forward-to').value,
+            ring_timeout: document.getElementById('forward-timeout').value
+          });
+          VP.toast(r.message);
+          VP.closeModal('forward-modal');
+          loadDetails();
+        } catch (err) { VP.toast(err.message, 'error'); }
+      });
+    });
+
+    document.getElementById('refresh-calls').addEventListener('click', e => VP.busy(e.currentTarget, () => Promise.all([loadDetails(), loadCalls()]).catch(err => VP.toast(err.message, 'error'))));
+
+    let usageDays = 30;
+    async function loadUsage() {
+      const { days } = await VP.api(`/api/client/usage?days=${usageDays}`);
+      const sum = k => days.reduce((a, d) => a + (d[k] || 0), 0);
+      VP.chart(document.getElementById('usage-chart'), {
+        data: days,
+        series: [
+          { key: 'answered', label: 'Answered', color: '#2563EB', type: 'bar' },
+          { key: 'missed', label: 'Missed', color: '#EA580C', type: 'bar', hatch: true },
+          { key: 'minutes', label: 'Minutes', color: '#0F172A', type: 'line', dash: true }
+        ],
+        tip: d => `<p>${VP.num(d.answered)} answered · ${VP.num(d.missed)} missed</p><p>${VP.num(d.minutes)} min used</p>`
+      });
+      const answered = sum('answered'), missed = sum('missed');
+      const rate = answered + missed ? Math.round(answered / (answered + missed) * 100) : 0;
+      const cell = (label, value) => `<div class="rounded-xl bg-slate-50 ring-1 ring-slate-100 px-4 py-3"><dt class="text-xs font-medium text-slate-500">${label}</dt><dd class="mt-1 text-xl font-bold tabular">${value}</dd></div>`;
+      document.getElementById('usage-totals').innerHTML =
+        cell(`Calls · ${usageDays} days`, VP.num(sum('calls'))) + cell('Answered', `${VP.num(answered)} <span class="text-sm font-medium text-slate-500">(${rate}%)</span>`) +
+        cell('Missed', VP.num(missed)) + cell('Minutes used', VP.num(sum('minutes')));
+    }
+    document.querySelectorAll('[data-range]').forEach(b => b.addEventListener('click', () => {
+      usageDays = Number(b.dataset.range);
+      document.querySelectorAll('[data-range]').forEach(x => x.setAttribute('aria-pressed', x === b));
+      loadUsage().catch(err => VP.toast(err.message, 'error'));
+    }));
+
+    // Highlight the sidebar link of the section in view
+    const navLinks = [...document.querySelectorAll('.vp-sidebar a.vp-nav-item')];
+    const spy = new IntersectionObserver(entries => entries.forEach(en => {
+      if (en.isIntersecting) navLinks.forEach(a => a.setAttribute('aria-current', a.hash === '#' + en.target.id));
+    }), { rootMargin: '-30% 0px -60% 0px' });
+    ['overview', 'numbers', 'calls', 'usage'].forEach(id => spy.observe(document.getElementById(id)));
+
+    const report = err => VP.toast(err.message, 'error');
+    loadDetails().catch(report);
+    loadCalls().catch(report);
+    loadUsage().catch(report);
+    // Poll quietly; skip while the tab is hidden
+    setInterval(() => {
+      if (document.hidden) return;
+      loadDetails().catch(() => {});
+      loadCalls().catch(() => {});
+    }, 15000);
+  </script>
+</body>
+</html>

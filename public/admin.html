@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin · Bolo1800</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/svg+xml" href="/static/img/favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/static/img/favicon-32.png">
+  <link rel="apple-touch-icon" href="/static/img/favicon-512.png">
+  <meta property="og:title" content="Admin Console · Bolo1800">
+  <meta property="og:image" content="/static/img/og-image.png">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    // One simple font everywhere: Tailwind's font-sans and font-mono both use Inter, numbers stay aligned via tabular-nums
+    tailwind.config = { theme: { extend: { fontFamily: {
+      sans: ['Inter', 'system-ui', '-apple-system', 'Segoe UI', 'sans-serif'],
+      mono: ['Inter', 'system-ui', '-apple-system', 'Segoe UI', 'sans-serif'],
+    } } } };
+  </script>
+  <link rel="stylesheet" href="/static/theme.css">
+  <script src="/static/common.js"></script>
+</head>
+<body class="min-h-screen">
+  <!-- Sidebar (drawer on mobile) -->
+  <aside class="vp-sidebar" aria-label="Main navigation">
+    <div class="h-16 px-5 flex items-center gap-2.5 shrink-0">
+      <img src="/static/img/logo-mark.svg" alt="" width="34" height="34" class="w-[34px] h-[34px]">
+      <span class="text-[17px] font-bold tracking-tight text-white">Bolo<span class="text-blue-400">1800</span></span>
+      <span class="ml-auto vp-badge bg-white/10 text-slate-300 text-[11px] px-2 py-0.5">Admin</span>
+    </div>
+    <div class="px-3">
+      <button class="vp-btn vp-btn-primary w-full h-11" id="open-create"><i data-icon="plus" class="w-4 h-4"></i>New client</button>
+    </div>
+    <nav class="flex-1 overflow-y-auto px-3 pb-4" role="tablist" aria-orientation="vertical" aria-label="Sections">
+      <p class="vp-nav-label">Business</p>
+      <button class="vp-nav-item" role="tab" data-tab="overview" aria-selected="true"><i data-icon="grid" class="w-[18px] h-[18px]"></i>Overview</button>
+      <button class="vp-nav-item" role="tab" data-tab="clients" aria-selected="false"><i data-icon="users" class="w-[18px] h-[18px]"></i>Clients</button>
+      <button class="vp-nav-item" role="tab" data-tab="topups" aria-selected="false"><i data-icon="wallet" class="w-[18px] h-[18px]"></i>Payments <span id="pending-count" class="hidden ml-auto vp-badge bg-orange-500 text-white px-2 py-0.5"></span></button>
+      <p class="vp-nav-label">Telephony</p>
+      <button class="vp-nav-item" role="tab" data-tab="inventory" aria-selected="false"><i data-icon="hash" class="w-[18px] h-[18px]"></i>Number inventory</button>
+    </nav>
+    <div class="p-3 border-t border-white/10">
+      <div class="flex items-center gap-3 rounded-xl p-2">
+        <span class="vp-avatar w-9 h-9 bg-orange-500/20 text-orange-200 text-xs">AD</span>
+        <div class="min-w-0 flex-1">
+          <p class="text-sm font-semibold text-white truncate">Admin</p>
+          <p class="text-xs text-slate-400 truncate">Full access</p>
+        </div>
+        <button class="vp-btn vp-btn-icon vp-btn-sm text-slate-400 hover:text-white hover:bg-white/10" id="open-password" aria-label="Change password" title="Change password"><i data-icon="key" class="w-4 h-4"></i></button>
+        <button class="vp-btn vp-btn-icon vp-btn-sm text-slate-400 hover:text-white hover:bg-white/10" onclick="VP.logout()" aria-label="Sign out" title="Sign out"><i data-icon="logout" class="w-4 h-4"></i></button>
+      </div>
+    </div>
+  </aside>
+  <div class="vp-scrim" aria-hidden="true"></div>
+
+  <div class="vp-main">
+  <header class="vp-topbar">
+    <div class="h-16 px-4 sm:px-8 flex items-center justify-between gap-4">
+      <div class="flex items-center gap-3 min-w-0">
+        <button class="vp-menu-btn vp-btn vp-btn-ghost vp-btn-icon" data-drawer aria-label="Open menu"><i data-icon="menu" class="w-5 h-5"></i></button>
+        <div class="min-w-0">
+          <h1 id="page-title" class="text-lg font-bold leading-tight">Overview</h1>
+          <p id="page-sub" class="text-xs text-slate-500 hidden sm:block truncate"></p>
+        </div>
+      </div>
+      <button class="vp-btn vp-btn-secondary vp-btn-sm" onclick="document.getElementById('open-create').click()"><i data-icon="plus" class="w-4 h-4"></i><span class="hidden sm:inline">New client</span></button>
+    </div>
+  </header>
+
+  <main class="px-4 sm:px-8 py-6 sm:py-8 max-w-[1400px]">
+    <!-- OVERVIEW -->
+    <section data-panel="overview" class="space-y-6">
+      <div id="default-pass-warning" class="hidden flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-red-800">
+        <i data-icon="lock" class="w-5 h-5 shrink-0 mt-0.5"></i>
+        <p class="text-sm font-medium flex-1">You signed in with the default admin password. Change it now — anyone who knows it can credit free minutes.</p>
+        <button class="vp-btn vp-btn-primary vp-btn-sm" onclick="document.getElementById('open-password').click()">Change</button>
+      </div>
+
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4" id="stat-cards">
+        <div class="vp-card p-5"><div class="vp-skeleton h-16"></div></div>
+        <div class="vp-card p-5"><div class="vp-skeleton h-16"></div></div>
+        <div class="vp-card p-5"><div class="vp-skeleton h-16"></div></div>
+        <div class="vp-card p-5"><div class="vp-skeleton h-16"></div></div>
+      </div>
+
+      <section class="vp-card" aria-labelledby="money-title">
+        <div class="vp-card-head">
+          <div>
+            <h2 id="money-title" class="text-lg font-bold">Revenue vs carrier cost</h2>
+            <p class="text-xs text-slate-500">Running totals: approved top-ups against billed minutes × carrier rate (number rental not included)</p>
+          </div>
+          <div class="vp-seg" role="group" aria-label="Chart range">
+            <button type="button" data-range="7" aria-pressed="false">7 days</button>
+            <button type="button" data-range="30" aria-pressed="true">30 days</button>
+            <button type="button" data-range="90" aria-pressed="false">90 days</button>
+          </div>
+        </div>
+        <div class="p-5">
+        <dl id="money-totals" class="grid grid-cols-2 sm:grid-cols-4 gap-3"></dl>
+        <ul class="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-sm text-slate-700" aria-label="Legend">
+          <li class="flex items-center gap-2"><svg width="22" height="14" aria-hidden="true"><line x1="1" y1="7" x2="21" y2="7" stroke="#2563EB" stroke-width="2.5" stroke-linecap="round"/></svg>Revenue (solid line)</li>
+          <li class="flex items-center gap-2"><svg width="22" height="14" aria-hidden="true"><line x1="1" y1="7" x2="21" y2="7" stroke="#C2410C" stroke-width="2.5" stroke-dasharray="5 4" stroke-linecap="round"/></svg>Carrier cost (dashed line)</li>
+        </ul>
+        <div id="money-chart" class="mt-3"><div class="vp-skeleton h-60"></div></div>
+        </div>
+      </section>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="vp-card">
+          <div class="vp-card-head"><div class="flex items-center gap-3">
+            <span class="vp-chip bg-orange-50 text-orange-600"><i data-icon="phone" class="w-5 h-5"></i></span>
+            <div><h2 class="text-base font-bold">This month's cost breakdown</h2>
+            <p class="text-xs text-slate-500">Billed minutes × your carrier rate, plus number rental</p></div></div></div>
+          <dl id="cost-breakdown" class="p-5 space-y-3 text-sm"></dl>
+        </div>
+        <div class="vp-card overflow-hidden">
+          <div class="vp-card-head"><div class="flex items-center gap-3">
+            <span class="vp-chip bg-emerald-50 text-emerald-600"><i data-icon="trending" class="w-5 h-5"></i></span>
+            <div><h2 class="text-base font-bold">Plan profitability</h2>
+            <p class="text-xs text-slate-500">If the client uses every minute they buy</p></div></div></div>
+          <div class="overflow-x-auto">
+            <table class="vp-table" id="plan-economics"></table>
+          </div>
+          <p id="plan-warning" class="hidden m-5 mt-0 text-sm rounded-lg bg-amber-50 border border-amber-200 text-amber-900 px-3 py-2"></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- CLIENTS -->
+    <section data-panel="clients" class="hidden">
+      <div class="vp-card overflow-hidden">
+        <div class="vp-card-head">
+          <div><h2 class="text-base font-bold">All clients</h2><p class="text-xs text-slate-500">Minutes, validity and payments per account</p></div>
+          <div class="relative w-full sm:w-80">
+                        <input id="client-search" type="search" class="vp-input" placeholder="Search company, username, number" aria-label="Search clients">
+          </div>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="vp-table">
+            <thead><tr><th>Company</th><th>Numbers</th><th>Minutes left</th><th>Valid until</th><th>Paid</th><th>Status</th><th class="text-right">Actions</th></tr></thead>
+            <tbody id="clients-body"><tr><td colspan="7"><div class="vp-skeleton h-6"></div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TOP-UPS -->
+    <section data-panel="topups" class="hidden">
+      <div class="vp-card overflow-hidden">
+        <div class="vp-card-head">
+          <div><h2 class="text-base font-bold">Payment requests</h2><p class="text-xs text-slate-500">Check the UTR in your bank / UPI app before approving. Approving credits minutes immediately.</p></div>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="vp-table">
+            <thead><tr><th>Date</th><th>Client</th><th>Plan</th><th>Amount</th><th>UTR / Ref</th><th>Status</th><th class="text-right">Actions</th></tr></thead>
+            <tbody id="topups-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- INVENTORY -->
+    <section data-panel="inventory" class="hidden space-y-4">
+      <div class="vp-card">
+        <div class="vp-card-head"><div class="flex items-center gap-3">
+          <span class="vp-chip bg-blue-50 text-blue-600"><i data-icon="plus" class="w-5 h-5"></i></span>
+          <div><h2 class="text-base font-bold">Add a number</h2><p class="text-xs text-slate-500">A 1800 number you bought from the carrier</p></div></div></div>
+        <form id="pool-form" class="p-5 grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
+          <div class="sm:col-span-2">
+            <label class="vp-label" for="pool-number">Number</label>
+            <input id="pool-number" class="vp-input tabular" placeholder="1800 123 4567" required>
+          </div>
+          <div>
+            <label class="vp-label" for="pool-type">Type</label>
+            <select id="pool-type" class="vp-input"><option>1800 Toll-Free</option><option>Virtual Landline DID</option><option>Virtual Mobile</option></select>
+          </div>
+          <div>
+            <label class="vp-label" for="pool-cost">Your rent / month (₹)</label>
+            <input id="pool-cost" class="vp-input tabular" type="number" min="0" value="999" required>
+          </div>
+          <button type="submit" class="vp-btn vp-btn-primary sm:col-start-4">Add number</button>
+        </form>
+      </div>
+      <div class="vp-card overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="vp-table">
+            <thead><tr><th>Number</th><th>Type</th><th>Rent / month</th><th>Status</th></tr></thead>
+            <tbody id="pool-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+  </div>
+
+  <!-- Create client modal -->
+  <div id="create-modal" data-modal class="vp-modal hidden fixed inset-0 z-50 items-end sm:items-center justify-center p-0 sm:p-4" role="dialog" aria-modal="true" aria-labelledby="create-title">
+    <form id="create-form" class="bg-white w-full sm:max-w-lg rounded-t-3xl sm:rounded-2xl p-6 space-y-4 max-h-[92vh] overflow-y-auto">
+      <div class="flex items-start justify-between">
+        <h3 id="create-title" class="text-xl font-bold tracking-tight">New client</h3>
+        <button type="button" data-close="create-modal" class="vp-btn vp-btn-ghost vp-btn-icon -mr-2 -mt-1" aria-label="Close"><i data-icon="x" class="w-5 h-5"></i></button>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="sm:col-span-2"><label class="vp-label" for="c-company">Company name</label><input id="c-company" class="vp-input" required></div>
+        <div><label class="vp-label" for="c-username">Login username</label><input id="c-username" class="vp-input" autocapitalize="none" pattern="[a-zA-Z0-9_.\-]{3,32}" required><p class="vp-help">Letters, numbers, _ . -</p></div>
+        <div><label class="vp-label" for="c-password">Password</label><input id="c-password" class="vp-input tabular" minlength="8" required><p class="vp-help">Min 8 characters. Share it securely.</p></div>
+        <div class="sm:col-span-2"><label class="vp-label" for="c-phone">Contact mobile</label><input id="c-phone" class="vp-input tabular" inputmode="tel"></div>
+      </div>
+      <div class="rounded-xl bg-slate-50 border border-slate-200 p-4 grid grid-cols-3 gap-3">
+        <p class="col-span-3 vp-label mb-0">Opening package</p>
+        <div><label class="vp-label" for="c-minutes">Minutes</label><input id="c-minutes" type="number" min="0" class="vp-input tabular" required></div>
+        <div><label class="vp-label" for="c-months">Months</label><input id="c-months" type="number" min="1" max="36" class="vp-input tabular" required></div>
+        <div><label class="vp-label" for="c-amount">Collected ₹</label><input id="c-amount" type="number" min="0" class="vp-input tabular" required></div>
+        <p class="col-span-3 vp-help mt-0">The amount is recorded as revenue so your margin report stays accurate. Enter 0 for a free trial.</p>
+      </div>
+      <div class="flex gap-3 pt-2">
+        <button type="button" data-close="create-modal" class="vp-btn vp-btn-secondary flex-1">Cancel</button>
+        <button type="submit" class="vp-btn vp-btn-primary flex-1">Create client</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Assign number modal -->
+  <div id="assign-modal" data-modal class="vp-modal hidden fixed inset-0 z-50 items-end sm:items-center justify-center p-0 sm:p-4" role="dialog" aria-modal="true" aria-labelledby="assign-title">
+    <form id="assign-form" class="bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl p-6 space-y-4">
+      <div class="flex items-start justify-between">
+        <div><h3 id="assign-title" class="text-xl font-bold tracking-tight">Assign number</h3><p id="assign-client" class="text-sm text-slate-600"></p></div>
+        <button type="button" data-close="assign-modal" class="vp-btn vp-btn-ghost vp-btn-icon -mr-2 -mt-1" aria-label="Close"><i data-icon="x" class="w-5 h-5"></i></button>
+      </div>
+      <input type="hidden" id="assign-id">
+      <div>
+        <label class="vp-label" for="assign-number">Number from inventory</label>
+        <select id="assign-number" class="vp-input tabular" required></select>
+        <p id="assign-empty" class="hidden vp-help text-amber-700">No free numbers. Add one under Number inventory first.</p>
+      </div>
+      <div><label class="vp-label" for="assign-label">Line name</label><input id="assign-label" class="vp-input" placeholder="Main Line"></div>
+      <div><label class="vp-label" for="assign-forward">Forward to mobiles</label><input id="assign-forward" class="vp-input tabular" placeholder="9876543210, 9811223344" required></div>
+      <div class="flex gap-3 pt-2">
+        <button type="button" data-close="assign-modal" class="vp-btn vp-btn-secondary flex-1">Cancel</button>
+        <button type="submit" class="vp-btn vp-btn-primary flex-1">Assign</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Renew package modal -->
+  <div id="renew-modal" data-modal class="vp-modal hidden fixed inset-0 z-50 items-end sm:items-center justify-center p-0 sm:p-4" role="dialog" aria-modal="true" aria-labelledby="renew-title">
+    <form id="renew-form" class="bg-white w-full sm:max-w-sm rounded-t-3xl sm:rounded-2xl p-6 space-y-4">
+      <div class="flex items-start justify-between">
+        <h3 id="renew-title" class="text-xl font-bold tracking-tight">Add package</h3>
+        <button type="button" data-close="renew-modal" class="vp-btn vp-btn-ghost vp-btn-icon -mr-2 -mt-1" aria-label="Close"><i data-icon="x" class="w-5 h-5"></i></button>
+      </div>
+      <input type="hidden" id="renew-id">
+      <p id="renew-summary" class="text-sm text-slate-700"></p>
+      <div><label class="vp-label" for="renew-ref">Payment reference</label><input id="renew-ref" class="vp-input tabular" placeholder="UTR / cheque / cash"></div>
+      <div class="flex gap-3 pt-2">
+        <button type="button" data-close="renew-modal" class="vp-btn vp-btn-secondary flex-1">Cancel</button>
+        <button type="submit" class="vp-btn vp-btn-primary flex-1">Add &amp; record payment</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Change password modal -->
+  <div id="password-modal" data-modal class="vp-modal hidden fixed inset-0 z-50 items-end sm:items-center justify-center p-0 sm:p-4" role="dialog" aria-modal="true" aria-labelledby="password-title">
+    <form id="password-form" class="bg-white w-full sm:max-w-sm rounded-t-3xl sm:rounded-2xl p-6 space-y-4">
+      <div class="flex items-start justify-between">
+        <h3 id="password-title" class="text-xl font-bold tracking-tight">Change admin password</h3>
+        <button type="button" data-close="password-modal" class="vp-btn vp-btn-ghost vp-btn-icon -mr-2 -mt-1" aria-label="Close"><i data-icon="x" class="w-5 h-5"></i></button>
+      </div>
+      <div><label class="vp-label" for="pw-current">Current password</label><input id="pw-current" type="password" class="vp-input" autocomplete="current-password" required></div>
+      <div><label class="vp-label" for="pw-new">New password</label><input id="pw-new" type="password" class="vp-input" autocomplete="new-password" minlength="8" required><p class="vp-help">At least 8 characters.</p></div>
+      <div class="flex gap-3 pt-2">
+        <button type="button" data-close="password-modal" class="vp-btn vp-btn-secondary flex-1">Cancel</button>
+        <button type="submit" class="vp-btn vp-btn-primary flex-1">Update</button>
+      </div>
+    </form>
+  </div>
+
+  <script>
+    const { token, user } = VP.session();
+    if (!token || user?.role !== 'admin') window.location.replace('/login');
+
+    let clients = [];
+    let pool = [];
+    let config = null;
+    const report = err => VP.toast(err.message, 'error');
+
+    // ----- Tabs (state kept in the URL hash so refresh and back work) -----
+    const TAB_TITLES = {
+      overview: ['Overview', 'Revenue, carrier cost and margin this month'],
+      clients: ['Clients', 'Every business using a Bolo1800 line'],
+      topups: ['Payments', 'UPI top-ups waiting for your check'],
+      inventory: ['Number inventory', '1800 numbers you own and who has them']
+    };
+    function showTab(name) {
+      if (!document.querySelector(`[data-panel="${name}"]`)) name = 'overview';
+      document.querySelectorAll('[data-tab]').forEach(t => t.setAttribute('aria-selected', t.dataset.tab === name));
+      document.querySelectorAll('[data-panel]').forEach(p => p.classList.toggle('hidden', p.dataset.panel !== name));
+      if (location.hash !== '#' + name) history.replaceState(null, '', '#' + name);
+      const [title, sub] = TAB_TITLES[name];
+      document.getElementById('page-title').textContent = title;
+      document.getElementById('page-sub').textContent = sub;
+    }
+    document.querySelectorAll('[data-tab]').forEach(t => t.addEventListener('click', () => showTab(t.dataset.tab)));
+    showTab(location.hash.slice(1) || 'overview');
+    window.addEventListener('hashchange', () => showTab(location.hash.slice(1)));
+
+    // ----- Overview -----
+    const CHIP = { wallet: 'bg-blue-50 text-blue-600', phone: 'bg-orange-50 text-orange-600', trending: 'bg-emerald-50 text-emerald-600', hash: 'bg-violet-50 text-violet-600' };
+    function statCard(label, value, sub, iconName, tone = '') {
+      return `<div class="vp-card p-5">
+        <div class="flex items-center justify-between"><p class="text-sm font-medium text-slate-600">${VP.esc(label)}</p>
+          <span class="vp-chip ${CHIP[iconName] || 'bg-slate-100 text-slate-500'}">${VP.icon(iconName, 'w-5 h-5')}</span></div>
+        <p class="mt-3 text-2xl sm:text-[28px] font-bold tabular ${tone}">${VP.esc(value)}</p>
+        <p class="mt-1 text-xs text-slate-500">${VP.esc(sub)}</p></div>`;
+    }
+
+    async function loadStats() {
+      const [s, cfg] = await Promise.all([VP.api('/api/admin/stats'), config ? Promise.resolve(config) : VP.api('/api/plans')]);
+      config = cfg;
+      const margin = s.est_margin_month;
+      document.getElementById('stat-cards').innerHTML =
+        statCard('Revenue this month', VP.inr(s.revenue_month), `${VP.inr(s.revenue_all_time)} all time`, 'wallet') +
+        statCard('Est. cost this month', VP.inr(s.est_cost_month), `${VP.num(s.minutes_month)} min billed`, 'phone') +
+        statCard('Est. margin', VP.inr(margin), s.revenue_month ? `${Math.round(margin / s.revenue_month * 100)}% of revenue` : 'No revenue yet', 'trending', margin < 0 ? 'text-red-600' : 'text-emerald-700') +
+        statCard('Active lines', VP.num(s.active_lines), `${s.pending_topups} payment${s.pending_topups === 1 ? '' : 's'} to verify`, 'hash');
+
+      const pc = document.getElementById('pending-count');
+      pc.textContent = s.pending_topups;
+      pc.classList.toggle('hidden', !s.pending_topups);
+
+      const row = (k, v, strong) => `<div class="flex justify-between gap-4 ${strong ? 'pt-3 border-t border-slate-200 font-bold' : ''}"><dt class="${strong ? '' : 'text-slate-600'}">${k}</dt><dd class="tabular">${v}</dd></div>`;
+      document.getElementById('cost-breakdown').innerHTML =
+        row(`Call minutes (${VP.num(s.minutes_month)} × ₹${s.cost_per_min.toFixed(2)})`, VP.inr(s.call_cost_month)) +
+        row(`Number rental (${s.active_lines} line${s.active_lines === 1 ? '' : 's'})`, VP.inr(s.rental_month)) +
+        row('Total estimated cost', VP.inr(s.est_cost_month), true) +
+        row('Unused minutes clients still hold', `${VP.num(s.unused_minutes)} min ≈ ${VP.inr(s.unused_minutes_cost)} future cost`) +
+        row('Extra minutes clients owe you', `${VP.num(s.overage_minutes)} min = ${VP.inr(s.overage_due)} to collect`);
+
+      // Per-plan margin, assuming every minute is used; rental is per line per month
+      const avgRent = pool.length ? Math.round(pool.reduce((a, p) => a + (p.monthly_cost || 0), 0) / pool.length) : 999;
+      const pk = cfg.package;
+      const items = [
+        { name: `Package (${pk.months} months)`, minutes: pk.minutes, amount: pk.amount, rent: avgRent * pk.months },
+        ...cfg.plans.map(p => ({ name: `Top-up · ${p.name}`, minutes: p.minutes, amount: p.amount, rent: 0 })),
+        { name: `Extra minutes (after the bundle, ×100)`, minutes: 100, amount: Math.round(100 * cfg.overage.rate), rent: 0 }
+      ].map(i => ({ ...i, cost: Math.round(i.minutes * s.cost_per_min + i.rent) }));
+      document.getElementById('plan-economics').innerHTML = `<thead><tr><th>Plan</th><th>Price</th><th>₹/min</th><th>Your cost</th><th>Profit</th></tr></thead><tbody>` +
+        items.map(i => {
+          const p = i.amount - i.cost;
+          return `<tr><td>${VP.esc(i.name)}${i.rent ? `<p class="text-xs text-slate-500">incl. ${VP.inr(i.rent)} rental</p>` : ''}</td>
+            <td class="tabular">${VP.inr(i.amount)}</td><td class="tabular">${(i.amount / i.minutes).toFixed(2)}</td>
+            <td class="tabular">${VP.inr(i.cost)}</td>
+            <td class="tabular font-semibold ${p < 0 ? 'text-red-600' : 'text-emerald-700'}">${p < 0 ? '−' : ''}${VP.inr(Math.abs(p))}</td></tr>`;
+        }).join('') + '</tbody>';
+
+      const warn = document.getElementById('plan-warning');
+      const losing = items.filter(i => i.amount < i.cost);
+      const msgs = [];
+      // Profit column assumes every minute is used; most clients use far less, so a loss here is the worst case
+      if (losing.length) msgs.push(`${losing.map(i => i.name).join(', ')} ${losing.length === 1 ? 'loses' : 'lose'} money only if the client uses every minute, at ₹${s.cost_per_min.toFixed(2)}/min and ₹${VP.num(avgRent)}/month rental. Watch “Unused minutes” to see real usage.`);
+      warn.textContent = msgs.join(' ');
+      warn.classList.toggle('hidden', !msgs.length);
+    }
+
+    // ----- Clients -----
+    async function loadClients() {
+      ({ clients } = await VP.api('/api/admin/clients'));
+      renderClients();
+    }
+
+    function renderClients() {
+      const q = document.getElementById('client-search').value.trim().toLowerCase();
+      const rows = clients.filter(c => !q || [c.company_name, c.username, ...c.numbers.map(n => n.number)].join(' ').toLowerCase().includes(q));
+      const body = document.getElementById('clients-body');
+      if (!rows.length) {
+        body.innerHTML = `<tr><td colspan="7" class="text-center py-10 text-slate-500">${clients.length ? 'No clients match your search.' : 'No clients yet. Click “New client” to onboard your first one.'}</td></tr>`;
+        return;
+      }
+      body.innerHTML = rows.map(c => {
+        const days = VP.daysLeft(c.package_expiry_date);
+        const active = c.status === 'active';
+        return `<tr>
+          <td><div class="flex items-center gap-3"><span class="vp-avatar w-9 h-9 bg-blue-50 text-blue-700 text-xs">${VP.esc(VP.initials(c.company_name))}</span>
+            <div class="min-w-0"><p class="font-semibold">${VP.esc(c.company_name)}</p><p class="text-xs text-slate-500">${VP.esc(c.username)}${c.phone ? ' · ' + VP.esc(c.phone) : ''}</p></div></div></td>
+          <td>${c.numbers.length ? c.numbers.map(n => `<p class="font-mono text-sm whitespace-nowrap">${VP.esc(VP.prettyNumber(n.number))}</p><p class="text-xs text-slate-500 truncate max-w-[200px]" title="${VP.esc(n.forward_to)}">→ ${VP.esc(n.forward_to)}</p>`).join('') : '<span class="text-sm text-amber-700">None</span>'}</td>
+          <td class="tabular font-semibold ${c.minutes_balance <= 50 ? 'text-red-600' : ''}">${VP.num(c.minutes_balance)}<p class="text-xs font-normal text-slate-500">${VP.num(c.minutes_used)} used</p>${c.overage_minutes > 0 ? `<p class="text-xs font-semibold text-amber-700">+${VP.num(c.overage_minutes)} extra · ${VP.inr(Math.round(c.overage_minutes * (config?.overage?.rate ?? 1)))} due</p>` : ''}${c.overage_enabled ? '' : '<p class="text-xs font-normal text-slate-500">Extra minutes off</p>'}</td>
+          <td class="whitespace-nowrap">${VP.esc(c.package_expiry_date || '—')}<p class="text-xs ${days !== null && days <= 7 ? 'text-red-600 font-semibold' : 'text-slate-500'}">${days === null ? '' : days < 0 ? 'Expired' : days + ' days left'}</p></td>
+          <td class="tabular">${VP.inr(c.revenue)}</td>
+          <td><span class="vp-badge ${active ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}">${active ? 'Active' : 'Suspended'}</span></td>
+          <td><div class="flex justify-end gap-2">
+            ${c.overage_minutes > 0 ? `<button class="vp-btn vp-btn-primary vp-btn-sm" onclick="settleOverage(${Number(c.id)}, this)">${VP.icon('check', 'w-4 h-4')}Collect ${VP.inr(Math.round(c.overage_minutes * (config?.overage?.rate ?? 1)))}</button>` : ''}
+            <button class="vp-btn vp-btn-secondary vp-btn-sm" onclick="openRenew(${Number(c.id)})">${VP.icon('plus', 'w-4 h-4')}Package</button>
+            <button class="vp-btn vp-btn-secondary vp-btn-sm" onclick="toggleOverage(${Number(c.id)}, ${c.overage_enabled ? 0 : 1}, this)" title="Let calls continue at ₹1/min after the bundle runs out">${c.overage_enabled ? 'Stop extra minutes' : 'Allow extra minutes'}</button>
+            <button class="vp-btn vp-btn-secondary vp-btn-sm" onclick="openAssign(${Number(c.id)})">${VP.icon('hash', 'w-4 h-4')}Number</button>
+            <button class="vp-btn ${active ? 'vp-btn-danger' : 'vp-btn-secondary'} vp-btn-sm" onclick="toggleStatus(${Number(c.id)}, '${active ? 'suspended' : 'active'}', this)" aria-label="${active ? 'Suspend' : 'Activate'} ${VP.esc(c.company_name)}">${VP.icon(active ? 'pause' : 'play', 'w-4 h-4')}${active ? 'Suspend' : 'Activate'}</button>
+          </div></td>
+        </tr>`;
+      }).join('');
+    }
+    document.getElementById('client-search').addEventListener('input', renderClients);
+
+    window.toggleStatus = async (id, status, btn) => {
+      const c = clients.find(x => x.id === id);
+      if (status === 'suspended' && !confirm(`Suspend ${c.company_name}? Their callers will hear "number unavailable".`)) return;
+      await VP.busy(btn, async () => {
+        try {
+          const r = await VP.api('/api/admin/clients/status', { client_id: id, status });
+          VP.toast(r.message);
+          await loadClients();
+        } catch (err) { report(err); }
+      });
+    };
+
+    window.settleOverage = async (id, btn) => {
+      const c = clients.find(x => x.id === id);
+      const due = Math.round(c.overage_minutes * (config?.overage?.rate ?? 1));
+      const ref = prompt(`Mark ${VP.inr(due)} for ${c.overage_minutes} extra minutes as paid by ${c.company_name}?\n\nUPI / UTR reference (optional):`, '');
+      if (ref === null) return;
+      await VP.busy(btn, async () => {
+        try {
+          const r = await VP.api('/api/admin/clients/settle-overage', { client_id: id, payment_ref: ref });
+          VP.toast(r.message);
+          loadClients(); loadStats();
+        } catch (err) { report(err); }
+      });
+    };
+
+    window.toggleOverage = async (id, enabled, btn) => {
+      await VP.busy(btn, async () => {
+        try {
+          const r = await VP.api('/api/admin/clients/overage', { client_id: id, enabled: !!enabled });
+          VP.toast(r.message || (enabled ? 'Extra minutes allowed' : 'Extra minutes stopped'));
+          loadClients();
+        } catch (err) { report(err); }
+      });
+    };
+
+    window.openRenew = id => {
+      const c = clients.find(x => x.id === id);
+      const pk = config?.package || { minutes: 3000, months: 3, amount: 5000 };
+      document.getElementById('renew-id').value = id;
+      document.getElementById('renew-ref').value = '';
+      document.getElementById('renew-summary').innerHTML = `Add <strong>${VP.num(pk.minutes)} minutes</strong> and <strong>${pk.months} months</strong> to <strong>${VP.esc(c.company_name)}</strong>, and record <strong>${VP.inr(pk.amount)}</strong> as paid.`;
+      VP.openModal('renew-modal');
+    };
+    document.getElementById('renew-form').addEventListener('submit', async e => {
+      e.preventDefault();
+      await VP.busy(e.submitter, async () => {
+        try {
+          const r = await VP.api('/api/admin/clients/add-package', { client_id: document.getElementById('renew-id').value, payment_ref: document.getElementById('renew-ref').value });
+          VP.toast(r.message);
+          VP.closeModal('renew-modal');
+          loadClients(); loadStats();
+        } catch (err) { report(err); }
+      });
+    });
+
+    window.openAssign = id => {
+      const c = clients.find(x => x.id === id);
+      document.getElementById('assign-id').value = id;
+      document.getElementById('assign-client').textContent = c.company_name;
+      document.getElementById('assign-label').value = '';
+      document.getElementById('assign-forward').value = c.phone || '';
+      const free = pool.filter(p => p.status === 'available');
+      document.getElementById('assign-number').innerHTML = free.map(p => `<option value="${VP.esc(p.phone_number)}">${VP.esc(VP.prettyNumber(p.phone_number))} · ${VP.esc(p.number_type)}</option>`).join('');
+      document.getElementById('assign-empty').classList.toggle('hidden', free.length > 0);
+      VP.openModal('assign-modal');
+    };
+    document.getElementById('assign-form').addEventListener('submit', async e => {
+      e.preventDefault();
+      await VP.busy(e.submitter, async () => {
+        try {
+          const r = await VP.api('/api/admin/clients/assign-number', {
+            client_id: document.getElementById('assign-id').value,
+            phone_number: document.getElementById('assign-number').value,
+            label: document.getElementById('assign-label').value,
+            forward_to: document.getElementById('assign-forward').value
+          });
+          VP.toast(r.message);
+          VP.closeModal('assign-modal');
+          loadClients(); loadPool(); loadStats();
+        } catch (err) { report(err); }
+      });
+    });
+
+    document.getElementById('open-create').addEventListener('click', () => {
+      const pk = config?.package || { minutes: 3000, months: 3, amount: 5000 };
+      document.getElementById('create-form').reset();
+      document.getElementById('c-minutes').value = pk.minutes;
+      document.getElementById('c-months').value = pk.months;
+      document.getElementById('c-amount').value = pk.amount;
+      VP.openModal('create-modal');
+    });
+    document.getElementById('create-form').addEventListener('submit', async e => {
+      e.preventDefault();
+      if (!e.target.reportValidity()) return;
+      await VP.busy(e.submitter, async () => {
+        try {
+          const r = await VP.api('/api/admin/clients/create', {
+            company_name: document.getElementById('c-company').value,
+            username: document.getElementById('c-username').value,
+            password: document.getElementById('c-password').value,
+            phone: document.getElementById('c-phone').value,
+            initial_minutes: document.getElementById('c-minutes').value,
+            expiry_months: document.getElementById('c-months').value,
+            amount_paid: document.getElementById('c-amount').value
+          });
+          VP.toast(r.message);
+          VP.closeModal('create-modal');
+          showTab('clients');
+          loadClients(); loadStats();
+        } catch (err) { report(err); }
+      });
+    });
+
+    // ----- Payments -----
+    async function loadTopups() {
+      const { requests } = await VP.api('/api/admin/topup-requests');
+      const body = document.getElementById('topups-body');
+      const tone = { approved: 'bg-emerald-50 text-emerald-700', pending: 'bg-amber-50 text-amber-800', rejected: 'bg-red-50 text-red-700' };
+      body.innerHTML = requests.length ? requests.map(r => `<tr>
+        <td class="whitespace-nowrap text-slate-600">${VP.esc(VP.dateTime(r.created_at))}</td>
+        <td><div class="flex items-center gap-3"><span class="vp-avatar w-9 h-9 bg-blue-50 text-blue-700 text-xs">${VP.esc(VP.initials(r.company_name))}</span>
+          <div><p class="font-semibold">${VP.esc(r.company_name)}</p><p class="text-xs text-slate-500">${VP.num(r.current_balance)} min left now</p></div></div></td>
+        <td>${VP.esc(r.plan_name)}${r.source === 'admin' ? '<p class="text-xs text-slate-500">Added by admin</p>' : ''}</td>
+        <td class="tabular font-semibold">${VP.inr(r.amount)}</td>
+        <td class="font-mono text-xs">${VP.esc(r.payment_ref || '—')}</td>
+        <td><span class="vp-badge ${tone[r.status] || 'bg-slate-100 text-slate-700'}">${VP.esc(r.status)}</span></td>
+        <td><div class="flex justify-end gap-2">${r.status === 'pending' ? `
+          <button class="vp-btn vp-btn-danger vp-btn-sm" onclick="processTopup(${Number(r.id)}, 'reject', this)">${VP.icon('x', 'w-4 h-4')}Reject</button>
+          <button class="vp-btn vp-btn-primary vp-btn-sm" onclick="processTopup(${Number(r.id)}, 'approve', this)">${VP.icon('check', 'w-4 h-4')}Approve</button>` : ''}</div></td>
+      </tr>`).join('') : `<tr><td colspan="7" class="text-center py-12"><div class="flex flex-col items-center justify-center">
+        <img src="/static/img/empty-payments.webp" width="180" height="135" alt="" class="w-40 h-auto mb-3 opacity-90 drop-shadow-sm">
+        <p class="font-semibold text-slate-800">No payment requests yet</p>
+        <p class="text-xs text-slate-500 max-w-sm mt-1">When clients submit minute top-up requests via UPI, they will appear here for 1-click verification.</p>
+      </div></td></tr>`;
+    }
+
+    window.processTopup = async (id, action, btn) => {
+      if (action === 'reject' && !confirm('Reject this payment? The client will not get minutes.')) return;
+      await VP.busy(btn, async () => {
+        try {
+          const r = await VP.api('/api/admin/topup-approve', { request_id: id, action });
+          VP.toast(r.message);
+          loadTopups(); loadClients(); loadStats();
+        } catch (err) { report(err); }
+      });
+    };
+
+    // ----- Inventory -----
+    async function loadPool() {
+      ({ numbers: pool } = await VP.api('/api/admin/number-pool'));
+      document.getElementById('pool-body').innerHTML = pool.length ? pool.map(p => `<tr>
+        <td class="font-mono font-semibold">${VP.esc(VP.prettyNumber(p.phone_number))}</td>
+        <td>${VP.esc(p.number_type)}</td>
+        <td class="tabular">${VP.inr(p.monthly_cost)}</td>
+        <td><span class="vp-badge ${p.status === 'available' ? 'bg-blue-50 text-blue-700' : 'bg-slate-100 text-slate-700'}">${p.status === 'available' ? 'Free' : 'Assigned'}</span></td>
+      </tr>`).join('') : `<tr><td colspan="4" class="text-center py-10 text-slate-500">No numbers yet. Add the numbers you rent from your carrier above.</td></tr>`;
+    }
+    document.getElementById('pool-form').addEventListener('submit', async e => {
+      e.preventDefault();
+      await VP.busy(e.submitter, async () => {
+        try {
+          const r = await VP.api('/api/admin/number-pool/add', {
+            phone_number: document.getElementById('pool-number').value,
+            number_type: document.getElementById('pool-type').value,
+            monthly_cost: document.getElementById('pool-cost').value
+          });
+          VP.toast(r.message);
+          document.getElementById('pool-number').value = '';
+          await loadPool();
+          loadStats();
+        } catch (err) { report(err); }
+      });
+    });
+
+    // ----- Password -----
+    document.getElementById('open-password').addEventListener('click', () => {
+      document.getElementById('password-form').reset();
+      VP.openModal('password-modal');
+    });
+    document.getElementById('password-form').addEventListener('submit', async e => {
+      e.preventDefault();
+      await VP.busy(e.submitter, async () => {
+        try {
+          const r = await VP.api('/api/auth/change-password', {
+            current_password: document.getElementById('pw-current').value,
+            new_password: document.getElementById('pw-new').value
+          });
+          VP.toast(r.message);
+          sessionStorage.removeItem('vp_default_pass');
+          document.getElementById('default-pass-warning').classList.add('hidden');
+          VP.closeModal('password-modal');
+        } catch (err) { report(err); }
+      });
+    });
+    if (sessionStorage.getItem('vp_default_pass')) document.getElementById('default-pass-warning').classList.remove('hidden');
+
+    // Pool first so the profitability table can use real rental costs
+    let moneyDays = 30;
+    async function loadMoney() {
+      const { days } = await VP.api(`/api/admin/usage?days=${moneyDays}`);
+      let rev = 0, cost = 0;
+      const data = days.map(d => ({ ...d, rev_total: (rev += d.revenue || 0), cost_total: Math.round(cost += d.cost || 0) }));
+      VP.chart(document.getElementById('money-chart'), {
+        data,
+        fmt: v => v >= 1000 ? '₹' + (v / 1000).toFixed(v % 1000 ? 1 : 0) + 'k' : '₹' + v,
+        series: [
+          { key: 'rev_total', label: 'Revenue', color: '#2563EB', type: 'line' },
+          { key: 'cost_total', label: 'Carrier cost', color: '#C2410C', type: 'line', dash: true }
+        ],
+        tip: d => `<p>Revenue so far ${VP.inr(d.rev_total)}</p><p>Cost so far ${VP.inr(d.cost_total)}</p><p>${VP.num(d.minutes)} min billed that day</p>`
+      });
+      const margin = rev - Math.round(cost);
+      const cell = (label, value, cls = '') => `<div class="rounded-xl bg-slate-50 ring-1 ring-slate-100 px-4 py-3"><dt class="text-xs font-medium text-slate-500">${label}</dt><dd class="mt-1 text-xl font-bold tabular ${cls}">${value}</dd></div>`;
+      document.getElementById('money-totals').innerHTML =
+        cell(`Revenue · ${moneyDays} days`, VP.inr(rev)) + cell('Carrier cost', VP.inr(Math.round(cost))) +
+        cell('Gross margin', VP.inr(margin), margin < 0 ? 'text-red-600' : 'text-emerald-700') +
+        cell('Minutes billed', VP.num(days.reduce((s, d) => s + (d.minutes || 0), 0)));
+    }
+    document.querySelectorAll('[data-range]').forEach(b => b.addEventListener('click', () => {
+      moneyDays = Number(b.dataset.range);
+      document.querySelectorAll('[data-range]').forEach(x => x.setAttribute('aria-pressed', x === b));
+      loadMoney().catch(err => VP.toast(err.message, 'error'));
+    }));
+
+    loadPool().catch(report).finally(() => loadStats().catch(report));
+    loadClients().catch(report);
+    loadTopups().catch(report);
+    loadMoney().catch(report);
+  </script>
+</body>
+</html>

@@ -1,0 +1,5 @@
+# HTTPS in front of Bolo1800. Caddy fetches and renews the Let's Encrypt certificate itself.
+{$DOMAIN} {
+	encode gzip
+	reverse_proxy bolo1800:3000
+}

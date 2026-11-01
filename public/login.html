@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign in · Bolo1800</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/svg+xml" href="/static/img/favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/static/img/favicon-32.png">
+  <link rel="apple-touch-icon" href="/static/img/favicon-512.png">
+  <meta name="description" content="Bolo1800 — Your 1800 toll-free number routed to any mobile in your team. Live call logs, call recording, multi-device ringing.">
+  <meta property="og:title" content="Bolo1800 — Aapka Apna 1800 Number">
+  <meta property="og:description" content="Prepaid 1800 toll-free number for Indian businesses. Simultaneous ringing, recording, zero hardware.">
+  <meta property="og:image" content="/static/img/og-image.png">
+  <meta property="og:type" content="website">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    // One simple font everywhere: Tailwind's font-sans and font-mono both use Inter, numbers stay aligned via tabular-nums
+    tailwind.config = { theme: { extend: { fontFamily: {
+      sans: ['Inter', 'system-ui', '-apple-system', 'Segoe UI', 'sans-serif'],
+      mono: ['Inter', 'system-ui', '-apple-system', 'Segoe UI', 'sans-serif'],
+    } } } };
+  </script>
+  <link rel="stylesheet" href="/static/theme.css">
+  <script src="/static/common.js"></script>
+</head>
+<body class="min-h-screen bg-white">
+  <main class="min-h-screen grid lg:grid-cols-[1.1fr_1fr]">
+    <!-- Brand panel (desktop only): full-bleed illustration with headline on a dark gradient -->
+    <section class="hidden lg:block relative overflow-hidden bg-[#0B1220] m-3 rounded-[28px]">
+      <img src="/static/img/login-hero.webp" alt="" width="1600" height="1200" class="absolute inset-0 w-full h-full object-cover" style="object-position: 60% 50%">
+      <div class="absolute inset-0 bg-gradient-to-t from-[#0B1220] via-[#0B1220]/70 to-[#0B1220]/10"></div>
+      <div class="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-[#0B1220]/70 to-transparent"></div>
+      <div class="relative h-full flex flex-col justify-between p-10 xl:p-12 text-white">
+        <div class="flex items-center gap-2.5">
+          <img src="/static/img/logo-mark.svg" alt="" width="40" height="40" class="w-10 h-10">
+          <span class="text-lg font-bold tracking-tight">Bolo<span class="text-blue-400">1800</span></span>
+        </div>
+        <div class="max-w-xl">
+          <span class="inline-flex items-center gap-2 rounded-full bg-white/10 backdrop-blur px-3 py-1 text-xs font-semibold text-blue-100 ring-1 ring-white/15">
+            <span class="vp-pulse text-emerald-400"></span> Aapka apna 1800 number
+          </span>
+          <h1 class="mt-5 text-4xl xl:text-[44px] font-bold leading-[1.1]">Customers call free.<br>Every phone in your team rings.</h1>
+          <div class="mt-8 grid grid-cols-3 gap-3">
+            <div class="rounded-2xl bg-white/10 backdrop-blur ring-1 ring-white/15 p-4">
+              <i data-icon="route" class="w-5 h-5 text-blue-300"></i>
+              <p class="mt-3 text-sm font-semibold">Change forwarding</p>
+              <p class="text-xs text-slate-300 mt-0.5">Yourself, any time</p>
+            </div>
+            <div class="rounded-2xl bg-white/10 backdrop-blur ring-1 ring-white/15 p-4">
+              <i data-icon="clock" class="w-5 h-5 text-blue-300"></i>
+              <p class="mt-3 text-sm font-semibold">Live call logs</p>
+              <p class="text-xs text-slate-300 mt-0.5">With recordings</p>
+            </div>
+            <div class="rounded-2xl bg-white/10 backdrop-blur ring-1 ring-white/15 p-4">
+              <i data-icon="wallet" class="w-5 h-5 text-orange-300"></i>
+              <p class="mt-3 text-sm font-semibold">Prepaid minutes</p>
+              <p class="text-xs text-slate-300 mt-0.5">Top up with UPI</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Sign-in form -->
+    <section class="flex items-center justify-center px-5 py-12 sm:px-10">
+      <div class="w-full max-w-[400px]">
+        <div class="flex items-center gap-2.5 mb-6 lg:hidden">
+          <img src="/static/img/logo-mark.svg" alt="" width="40" height="40" class="w-10 h-10">
+          <span class="text-lg font-bold tracking-tight">Bolo<span class="text-blue-600">1800</span></span>
+        </div>
+        <!-- Phone-only banner: the photo's left half is plain navy, so the headline sits there -->
+        <div class="lg:hidden relative mb-8 aspect-[1200/630] rounded-2xl overflow-hidden bg-[#0B2A5B]">
+          <img src="/static/img/login-banner.webp" alt="" width="800" height="420" class="absolute inset-0 w-full h-full object-cover">
+          <p class="relative w-1/2 h-full flex items-center pl-4 text-white text-lg font-bold leading-tight">Customers call free.<br>Your team picks up.</p>
+        </div>
+        <span class="vp-chip bg-blue-50 text-blue-600 hidden lg:inline-flex"><i data-icon="lock" class="w-5 h-5"></i></span>
+        <h2 class="mt-0 lg:mt-6 text-3xl font-bold">Welcome back</h2>
+        <p class="mt-2 text-slate-600">Sign in with the username and password from your account manager.</p>
+
+        <div id="login-error" role="alert" class="hidden mt-6 flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-3.5 py-3 text-sm text-red-800"></div>
+
+        <form id="login-form" class="mt-8 space-y-5" novalidate>
+          <div>
+            <label for="username" class="vp-label">Username</label>
+            <input id="username" name="username" class="vp-input h-12" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="e.g. sharma" required>
+          </div>
+          <div>
+            <label for="password" class="vp-label">Password</label>
+            <div class="relative">
+              <input id="password" name="password" type="password" class="vp-input h-12 pr-12" autocomplete="current-password" required>
+              <button type="button" id="toggle-pass" class="absolute inset-y-0 right-0 w-12 flex items-center justify-center text-slate-500 hover:text-slate-800" aria-label="Show password">
+                <i data-icon="eye" class="w-4 h-4"></i>
+              </button>
+            </div>
+          </div>
+          <button type="submit" id="submit-btn" class="vp-btn vp-btn-primary w-full h-12 text-[15px]">Sign in</button>
+        </form>
+
+        <div class="mt-10 flex items-start gap-3 rounded-xl bg-slate-50 border border-slate-200 p-4 text-sm text-slate-600">
+          <i data-icon="help" class="w-4 h-4 mt-0.5 shrink-0 text-slate-400"></i>
+          <p>Forgot your password? Contact your account manager to reset it.</p>
+        </div>
+        <p class="mt-8 text-xs text-slate-400">© Bolo1800 · Cloud telephony for Indian businesses</p>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const { token, user } = VP.session();
+    if (token && user) window.location.replace(user.role === 'admin' ? '/admin' : '/dashboard');
+
+    const errBox = document.getElementById('login-error');
+    const pass = document.getElementById('password');
+
+    document.getElementById('toggle-pass').addEventListener('click', e => {
+      const show = pass.type === 'password';
+      pass.type = show ? 'text' : 'password';
+      e.currentTarget.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+    });
+
+    document.getElementById('login-form').addEventListener('submit', async e => {
+      e.preventDefault();
+      errBox.classList.add('hidden');
+      const username = document.getElementById('username').value.trim();
+      if (!username || !pass.value) {
+        errBox.innerHTML = VP.icon('alert', 'w-4 h-4 mt-0.5 shrink-0') + '<span>Enter your username and password.</span>';
+        errBox.classList.remove('hidden');
+        return;
+      }
+      const btn = document.getElementById('submit-btn');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="vp-spin"></span> Signing in…';
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password: pass.value })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || 'Sign in failed');
+        VP.saveSession(data.token, data.user);
+        if (data.default_password) sessionStorage.setItem('vp_default_pass', '1');
+        window.location.href = data.user.role === 'admin' ? '/admin' : '/dashboard';
+      } catch (err) {
+        errBox.innerHTML = VP.icon('alert', 'w-4 h-4 mt-0.5 shrink-0') + `<span>${VP.esc(err.message === 'Failed to fetch' ? 'Cannot reach the server. Check your connection.' : err.message)}</span>`;
+        errBox.classList.remove('hidden');
+        btn.disabled = false;
+        btn.textContent = 'Sign in';
+      }
+    });
+  </script>
+</body>
+</html>

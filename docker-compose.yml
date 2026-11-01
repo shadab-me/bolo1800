@@ -1,0 +1,32 @@
+services:
+  bolo1800:
+    build: .
+    container_name: bolo1800_app
+    restart: always
+    env_file: .env
+    environment:
+      - PORT=3000
+      - DATA_DIR=/app/data
+    volumes:
+      - ./data:/app/data
+    # Not published: only Caddy reaches it, over HTTPS
+
+  caddy:
+    image: caddy:2.8.4-alpine
+    container_name: bolo1800_caddy
+    restart: always
+    depends_on:
+      - bolo1800
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - DOMAIN=${DOMAIN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  caddy_data:
+  caddy_config:
