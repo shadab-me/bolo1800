@@ -296,6 +296,22 @@ async function main() {
     assert.equal(c.revenue, 2);
   });
 
+  await step('exotel: GET query request returns HTTP 200 with text/plain forwarding numbers', async () => {
+    // Exotel sends GET with CallSid, CallFrom, CallTo
+    const qs = 'CallSid=exo_123&CallFrom=919876543210&CallTo=18002009999&Direction=inbound';
+    const res = await fetch(`${base}/api/webhook/incoming?token=test-webhook-token&${qs}`);
+    assert.equal(res.status, 200);
+    assert.match(res.headers.get('content-type'), /text\/plain/);
+    const text = await res.text();
+    assert.match(text, /\+919876543210/);
+
+    // Exotel call-complete returns 200 OK
+    const done = await fetch(`${base}/api/webhook/call-complete?token=test-webhook-token&CallSid=exo_123&DialCallDuration=61&DialCallStatus=completed`);
+    assert.equal(done.status, 200);
+    const doneText = await done.text();
+    assert.equal(doneText, 'OK');
+  });
+
   server.close();
   console.log(`\n${passed} checks passed`);
   process.exit(0);

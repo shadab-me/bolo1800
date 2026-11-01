@@ -520,6 +520,12 @@ const xmlEscape = s => String(s).replace(/[<>&"']/g, c => ({ '<': '&lt;', '>': '
 const toE164 = n => (n.length === 10 && /^[6-9]/.test(n) ? `+91${n}` : n);
 const webhookParams = req => ({ ...req.query, ...req.body });
 const isPlivo = p => (p.CallUUID || p.DialALegUUID ? true : p.CallSid ? false : PROVIDER !== 'twilio');
+const isExotel = (p, req) => {
+  if (PROVIDER === 'exotel' || p?.provider === 'exotel') return true;
+  if (p?.CallFrom || p?.CallTo || p?.DialCallDuration !== undefined || p?.DialCallStatus !== undefined || p?.CallType !== undefined) return true;
+  const ua = req?.get ? req.get('user-agent') || '' : '';
+  return /exotel/i.test(ua);
+};
 // Plivo reports no-answer as 'timeout'/'no-answer' and caller hang-up while ringing as 'cancel'
 const DIAL_STATUS = { 'no-answer': 'no-answer', timeout: 'no-answer', cancel: 'missed', canceled: 'missed', busy: 'busy', failed: 'failed', completed: 'completed' };
 
@@ -572,9 +578,9 @@ const safeUrl = u => (/^https?:\/\//i.test(String(u || '')) ? String(u) : '');
 app.all('/api/webhook/incoming', webhookAuth, h(async (req, res) => {
   const params = webhookParams(req);
   const plivo = isPlivo(params);
-  const dialedRaw = String(params.To || params.dialed_number || params.Called || '');
+  const dialedRaw = String(params.To || params.CallTo || params.dialed_number || params.Called || '');
   const dialedNumber = normalizeNumber(dialedRaw);
-  const callerNumber = String(params.From || params.caller_number || params.Caller || 'Unknown').slice(0, 32);
+  const callerNumber = String(params.From || params.CallFrom || params.caller_number || params.Caller || 'Unknown').slice(0, 32);
   const callSid = String(params.CallUUID || params.CallSid || params.call_sid || `CALL_${Date.now()}`).slice(0, 64);
 
   // Find who owns this number
@@ -592,6 +598,9 @@ app.all('/api/webhook/incoming', webhookAuth, h(async (req, res) => {
     : 0;
   // Number not configured, client suspended, out of minutes or package expired
   if (!assignment || assignment.user_status !== 'active' || allowance <= 0 || isExpired(assignment.package_expiry_date)) {
+    if (isExotel(params, req)) {
+      return res.status(302).send('Number unavailable or balance exhausted');
+    }
     return rejectCall(res, plivo);
   }
 
@@ -612,6 +621,13 @@ app.all('/api/webhook/incoming', webhookAuth, h(async (req, res) => {
   const ring = assignment.ring_timeout || 30;
   // Indian carriers only accept a caller ID you own, so the forwarded leg shows the dialed number
   const callerId = xmlEscape(dialedRaw || dialedNumber);
+
+  if (isExotel(params, req)) {
+    // Exotel Connect Applet (Application URL): expects 200 OK with comma-separated numbers in text/plain
+    // Exotel Passthru Applet: evaluates 200 OK as success branch
+    res.set('Content-Type', 'text/plain');
+    return res.status(200).send(targetNumbers.join(','));
+  }
 
   if (plivo) {
     const record = assignment.record_calls
@@ -652,6 +668,10 @@ app.all('/api/webhook/call-complete', webhookAuth, h(async (req, res) => {
     const seconds = Math.max(parseInt(p.DialCallDuration || p.Duration || p.duration || 0) || 0, 0);
     const status = String(p.DialCallStatus || p.CallStatus || 'completed').slice(0, 20);
     await finishCall(callId, { seconds, status, recording: safeUrl(p.RecordingUrl || p.recording_url) });
+  }
+
+  if (isExotel(p, req)) {
+    return res.status(200).send('OK');
   }
 
   sendXml(res, '  <Hangup/>');
