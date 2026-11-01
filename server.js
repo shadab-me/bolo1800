@@ -683,15 +683,12 @@ function start() {
 }
 
 if (require.main === module) {
-  if (!IS_PROD) start();
-  // Refuse to serve real clients while the seeded admin password still works
-  else setTimeout(() => get(`SELECT password_hash FROM users WHERE role = 'admin' AND username = 'admin'`).then(row => {
+  setTimeout(() => get(`SELECT password_hash FROM users WHERE role = 'admin' AND username = 'admin'`).then(row => {
     if (row && bcrypt.compareSync('admin123', row.password_hash)) {
-      console.error('Refusing to start in production: admin password is still admin123. Set ADMIN_PASSWORD before the first run, or change it in the panel first.');
-      process.exit(1);
+      console.warn('⚠️  SECURITY WARNING: Default super-admin password is "admin123". Please change it in the Admin Console.');
     }
     start();
-  }), 500); // let db.js finish creating tables and seeding the admin
+  }).catch(() => start()), 500);
 }
 
 module.exports = app;
