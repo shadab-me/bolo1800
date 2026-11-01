@@ -306,6 +306,8 @@ async function main() {
     assert.ok(data.destination);
     assert.ok(Array.isArray(data.destination.numbers));
     assert.deepEqual(data.destination.numbers, ['+919876543210', '+919811223344']);
+    assert.equal(data.record, false);
+    assert.equal(data.max_conversation_duration, 60);
 
     // Also support format=text
     const textRes = await fetch(`${base}/api/webhook/incoming?token=test-webhook-token&${qs}&format=text`);
@@ -314,11 +316,21 @@ async function main() {
     const text = await textRes.text();
     assert.match(text, /\+919876543210/);
 
-    // Exotel call-complete returns 200 OK
-    const done = await fetch(`${base}/api/webhook/call-complete?token=test-webhook-token&CallSid=exo_123&DialCallDuration=61&DialCallStatus=completed`);
+    // Exotel call-complete: answered call
+    const done = await fetch(`${base}/api/webhook/call-complete?token=test-webhook-token&CallSid=exo_123&DialCallDuration=45&DialCallStatus=completed`);
     assert.equal(done.status, 200);
     const doneText = await done.text();
     assert.equal(doneText, 'OK');
+
+    // Exotel call-complete: no-answer call
+    const noAns = await fetch(`${base}/api/webhook/call-complete?token=test-webhook-token&CallSid=exo_noans&DialCallDuration=0&DialCallStatus=no-answer`);
+    assert.equal(noAns.status, 200);
+    assert.equal(await noAns.text(), 'OK');
+
+    // Exotel call-complete: failed call
+    const failed = await fetch(`${base}/api/webhook/call-complete?token=test-webhook-token&CallSid=exo_fail&DialCallDuration=0&DialCallStatus=failed`);
+    assert.equal(failed.status, 200);
+    assert.equal(await failed.text(), 'OK');
   });
 
   server.close();

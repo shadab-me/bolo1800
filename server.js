@@ -635,12 +635,15 @@ app.all('/api/webhook/incoming', webhookAuth, h(async (req, res) => {
     }
     // Exotel Programmable Connect (Dynamic URL JSON mode):
     // https://support.exotel.com/support/solutions/articles/3000096873-programmable-connect-working-with-connect-applet-dynamic-url-
+    // Configured for Exotel test: record: false, max_conversation_duration: 60
+    const exotelDuration = parseInt(process.env.EXOTEL_MAX_DURATION || '60', 10);
+    const exotelRecord = process.env.EXOTEL_RECORD === 'true' ? true : false;
     return res.status(200).json({
       destination: {
         numbers: targetNumbers
       },
-      record: assignment.record_calls ? true : false,
-      max_conversation_duration: timeLimit
+      record: exotelRecord,
+      max_conversation_duration: exotelDuration
     });
   }
 
@@ -681,8 +684,15 @@ app.all('/api/webhook/call-complete', webhookAuth, h(async (req, res) => {
     if (status !== 'completed') await finishCall(callId, { status });
   } else if (callId) {
     const seconds = Math.max(parseInt(p.DialCallDuration || p.Duration || p.duration || 0) || 0, 0);
-    const status = String(p.DialCallStatus || p.CallStatus || 'completed').slice(0, 20);
-    await finishCall(callId, { seconds, status, recording: safeUrl(p.RecordingUrl || p.recording_url) });
+    const rawStatus = String(p.DialCallStatus || p.CallStatus || p.Status || (seconds > 0 ? 'completed' : 'failed')).toLowerCase();
+    let status = 'completed';
+    if (rawStatus.includes('no-answer') || rawStatus.includes('timeout')) status = 'no-answer';
+    else if (rawStatus.includes('busy')) status = 'busy';
+    else if (rawStatus.includes('fail') || rawStatus.includes('cancel')) status = 'failed';
+    else if (seconds > 0 || rawStatus.includes('complete')) status = 'completed';
+    else status = 'failed';
+
+    await finishCall(callId, { seconds: status === 'completed' ? seconds : 0, status, recording: safeUrl(p.RecordingUrl || p.recording_url) });
   }
 
   if (isExotel(p, req)) {
